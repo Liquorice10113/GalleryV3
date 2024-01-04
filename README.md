@@ -5,7 +5,7 @@ Folder scans and thumbnails cache are created on demand.
 
 For my personal use, hosted on linux.
 
-Also, PWA supported.
+Also, PWA supported (requires https, use nginx or something as reverse proxy).
 
 ## Requirement
 * python3
