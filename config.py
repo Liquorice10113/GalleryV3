@@ -1,6 +1,7 @@
 #visit http://127.0.0.1:5000/gv3
 url_base = "gv3"
 port = 5000
+#base folder
 base = "/mnt/base_folder"
 dark = True
 thumbnail_size = 300
