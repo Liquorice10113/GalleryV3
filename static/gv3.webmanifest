@@ -1,0 +1,21 @@
+{
+    "name": "GalleryV3",
+    "short_name": "gv3",
+    "description": "Progressive Web App.",
+    "icons": [
+        {
+            "src": "static/folder.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "static/folder.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/gv3",
+    "display": "fullscreen",
+    "theme_color": "#000000",
+    "background_color": "#000000"
+}

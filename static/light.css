@@ -1,0 +1,53 @@
+body {
+    background-color: #fff;
+    color: #000;
+}
+
+.thumb {
+    background-color: #fff;
+}
+
+#tree {
+    background-color: #fff;
+    color: #000;
+    backdrop-filter: none;
+}
+
+.tree_item {
+    color: #000;
+}
+
+#bottom_deco {
+    background-color: #fff;
+    color: #000;
+    backdrop-filter: none;
+}
+
+#back_btn {
+    color: #000;
+}
+
+.page_btn{
+    color: #000;
+}
+
+#current_p
+{
+    background-color: #aaa;
+}
+
+.vid_icon
+{
+    color: #fff;
+}
+
+.btn
+{
+color: #000;
+}
+
+#page_next,
+#page_prev
+{
+color: #333;
+}

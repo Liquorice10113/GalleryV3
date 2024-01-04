@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/{{misc['base']}}/static/style.css" type="text/css">
+    {% if not misc['dark'] %}
+    <link rel="stylesheet" href="/{{misc['base']}}/static/light.css" type="text/css">
+    {% endif %}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+</head>
+
+<body onresize="updateGrid()">
+    <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn">&larr;</a>
+    <div class="grid-container">
+        {% for dir in items["dirs"] %}
+        <a class="item dir_item" onclick="show_cover()" href="/{{misc['base']}}/tree/{{dir[0]}}">
+            <img class="thumb" src="/{{misc['base']}}/thumb/{{dir[0]}}">
+            <div style="overflow: hidden;white-space: nowrap;">
+                <div class="dir_cnt">{{dir[2]}}</div>
+                <div class="name">{{dir[1]}}</div>
+            </div>
+
+        </a>
+        {% endfor %}
+        {% for file in items["files"] %}
+        <a class="item file_item" onclick="show_cover()" href="/{{misc['base']}}/view/{{file[0]}}">
+            {% if file[2] %}
+            <div class="vid_icon">▶</div>
+            {% endif %}
+            <img class="thumb" src="/{{misc['base']}}/thumb/{{file[0]}}">
+            <div class="name">{{file[1]}}</div>
+        </a>
+        {% endfor %}
+    </div>
+    <div id="ui" style="display: block;">
+        <div id="tree">
+            <a class="tree_item" onclick="show_cover()" href="/{{misc['base']}}/tree/">/</a>
+            {% for i in misc['tree'] %}
+            <a class="tree_item" onclick="show_cover()" href="/{{misc['base']}}/tree/{{i[1]}}">{{i[0]}}</a>
+            {% endfor %}
+        </div>
+        <div id="bottom_deco"></div>
+        <div id="pages">
+            <a id="page_prev" onclick="show_cover()" href="/{{misc['base']}}/tree/{{misc['current']}}?p={{max(misc['index'][0]-1,0)}}">←</a>
+            <div id="pages_scroll">
+                {% for i in range(misc['index'][1]) %}
+                {% if misc['index'][0]==i %}
+                <a href="/{{misc['base']}}/tree/{{misc['current']}}?p={{i}}" onclick="show_cover()" class="page_btn" id="current_p">{{i}}</a>
+                {% else %}
+                <a href="/{{misc['base']}}/tree/{{misc['current']}}?p={{i}}" onclick="show_cover()" class="page_btn">{{i}}</a>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <a id="page_next" onclick="show_cover()" 
+                href="/{{misc['base']}}/tree/{{misc['current']}}?p={{min(misc['index'][0]+1,misc['index'][1]-1)}}">→</a>
+
+        </div>
+        <div id="buttons">
+            <div class="btn" onclick="toggle_dark()">◒</div>
+            <div class="btn" onclick="toggle_sort()">{{misc['sort']}}</div>
+            <div class="btn" onclick="toggle_r()">{% if misc['r'] %}&darr;{% else %}&uarr;{% endif %}</div>
+            <div class="btn" onclick="clear_cache()">&#8635;</div>
+            <div class="btn" onclick="toggle_filter_input()">&#9906;</div>
+        </div>
+        <div id="filter_input">
+            <input id="filter_str" />
+            <div id="clear_filter" onclick="clear_filter()">✕</div>
+            <div id="confirm_filter" onclick="confirm_filter()">&#9906;</div>
+        </div>
+    </div>
+    <div id="cover">
+        <div class="loader"></div>
+    </div>
+    <script>
+        {% if misc['dark'] %}
+        var dark = 1;
+        {% else %}
+        var dark = 0;
+        {% endif %}
+        var sortt = "{{misc['sort']}}";
+        var r = {{ misc['r']}}
+        const fontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize)
+        function updateGrid() {
+            windowW = window.innerWidth;
+            var col = Math.floor(windowW / (10 * fontSize));
+            grid = document.querySelector(".grid-container");
+            grid.style.gridTemplateColumns = `repeat(${col}, 1fr)`;
+        }
+        updateGrid()
+        function toggle_dark() {
+            dark = 1 - dark;
+            show_cover()
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?dark=" + dark, { method: 'GET' }).then(
+                () => {
+                    location.reload()
+                }
+            )
+        }
+        function toggle_sort() {
+            if (sortt == "name") sortt = "date";
+            else if (sortt == "date") sortt = "size";
+            else if (sortt == "size") sortt = "random";
+            else if (sortt == "random") sortt = "name";
+            show_cover()
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?sort=" + sortt, { method: 'GET' }).then(
+                () => {
+                    location.reload()
+                }
+            )
+        }
+        function toggle_r() {
+            r = 1 - r
+            show_cover()
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?r=" + r, { method: 'GET' }).then(
+                () => {
+                    location.reload()
+                }
+            )
+        }
+        function clear_cache() {
+            show_cover()
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?clear_cache", { method: 'GET' }).then(
+                () => {
+                    location.reload()
+                }
+            )
+        }
+        function scrollToCenter(s_div, element) {
+            // Get the dimensions of the viewport
+            if(!element) return;
+            var viewportWidth = window.innerWidth;
+
+            // Get the dimensions and position of the element
+            var elementRect = element.getBoundingClientRect();
+            var elementWidth = elementRect.width;
+
+            // Calculate the scroll position to center the element
+            var desiredScrollX = elementRect.left + elementWidth / 2 - viewportWidth / 2;
+
+            // Animate the scroll to the calculated position
+            s_div.scrollTo({
+                left: desiredScrollX,
+                behavior: 'instant'
+            });
+        }
+        scrollToCenter(document.getElementById("pages_scroll"), document.getElementById("current_p"))
+        window.parent.document.getElementById('fulls').style.display = "block"
+        {% if misc['filter_on'] %}
+        document.getElementById('filter_input').style.display = "block"
+        var filter_on = true
+        var filter_input_visable = true
+        document.getElementById('filter_str').value = "{{misc['filter']}}"
+        {% else %}
+        document.getElementById('filter_input').style.display = "none"
+        var filter_on = false
+        var filter_input_visable = false
+        {% endif %}
+        function toggle_filter_input() {
+            if(filter_input_visable)
+            {
+                document.getElementById('filter_input').style.display = "none"
+            }
+            else
+            {
+                document.getElementById('filter_input').style.display = "block"
+            }
+            filter_input_visable = !filter_input_visable
+        }
+        function clear_filter()
+        {
+            show_cover()
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?filter", { method: 'GET' }).then(
+                () => {
+                    window.location.href = "/{{misc['base']}}/tree/{{misc['current']}}?p=0"
+                }
+            )
+        }
+        function confirm_filter()
+        {
+            show_cover()
+            filter_str = document.getElementById('filter_str').value
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?filter="+filter_str, { method: 'GET' }).then(
+                () => {
+                    window.location.href = "/{{misc['base']}}/tree/{{misc['current']}}?p=0"
+                }
+            )
+
+        }
+        function show_cover()
+        {
+            document.getElementById('cover').style.display = "block"
+        }
+    </script>
+</body>
+
+
+</html>
