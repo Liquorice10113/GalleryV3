@@ -54,9 +54,13 @@ body {
     line-height: 7rem;
     width: 6rem;
     /* background-color: #000000aa; */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     border-radius: 3rem;
     color: #fff;
     font-size: 2rem;
+    filter: invert(1);
     /* border-top: #ffffffaa 0.1rem solid;
     border-left: #ffffffaa 0.1rem solid; */
 }
@@ -157,7 +161,7 @@ body {
 #pages_scroll {
     display: inline-block;
     position: absolute;
-    left: 3rem;
+    left: 0rem;
     width: calc(100% - 6rem);
     height: 3rem;
     overflow: auto;
@@ -174,19 +178,24 @@ body {
     display: inline-block;
     position: absolute;
     top: 0;
-    margin-top: 0.1;
-    height: 2.4rem;
-    width: 2.4rem;
+    margin-top: 0.1rem;
+    height: 2rem;
+    width: 2rem;
     text-align: center;
-    line-height: 2.2rem;
+    line-height: 2rem;
+    font-size: 0.9rem;
     /* background-color: #000000aa; */
     border-radius: 10rem;
     color: #ddd;
-    /* border: 0.1rem solid #ffffffaa; */
+    border: 0.1rem solid #ffffff33;
+}
+
+#page_prev {
+    left: calc(100% - 5.5rem);
 }
 
 #page_next {
-    left: calc(100% - 3rem);
+    left: calc(100% - 2.5rem);
 }
 
 .page_btn {
@@ -248,20 +257,20 @@ body {
     left: 0.1rem;
     width: 3rem;
     height: 3rem;
-    background-color: #000000aa;
+    background-color: #00000000;
     color: #fff;
     border-radius: 10rem;
-    font-size: 1.5rem;
-    /* border: #ffffffaa 0.1rem solid; */
-    border: none;
+    font-size: 1rem;
+    border: #ffffff33 0.1rem solid;
+    /* border: none; */
 }
 
 #seek-bar {
     position: fixed;
     z-index: 2;
-    bottom: 4.8rem;
-    left: 4rem;
-    width: calc(100% - 17rem);
+    bottom: 4.6rem;
+    left: 3.6rem;
+    width: calc(100% - 15rem);
     height: 0.5rem;
 }
 
@@ -271,10 +280,11 @@ body {
     z-index: 2;
     bottom: 3.4rem;
     right: 6.2rem;
-    width: 6rem;
+    width: 4rem;
     height: 3rem;
     line-height: 3rem;
-    background-color: #000000aa;
+    font-size: 0.8rem;
+    /* background-color: #000000aa; */
     color: #fff;
     border-radius: 10rem;
     /* border: #ffffffaa 0.1rem solid; */
@@ -417,7 +427,7 @@ input[type="range"] {
     width: 100%;
     height: 30px;
     border-radius: 5px;
-    background: #d3d3d3;
+    background: #333;
     outline: none;
     opacity: 0.7;
     /* -webkit-transition: .2s;
@@ -430,6 +440,7 @@ input[type="range"]::-webkit-slider-thumb {
     width: 15px;
     height: 15px;
     border-radius: 50%;
+    color: #fff;
     background: #fff;
     cursor: pointer;
 }
@@ -458,7 +469,7 @@ input[type="range"]::-moz-range-thumb {
     position: fixed;
     background-color: #333;
     bottom: 0rem;
-    left: 9.5rem;
+    left: 6.5rem;
     height: 3.2rem;
     width: 6rem;
     border-radius: 0.5rem;

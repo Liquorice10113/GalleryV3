@@ -173,10 +173,15 @@ def thumbnails(p, size=0):
         return os.path.join("cache", "{}_{}.jpg".format(hash, size))
     else:
         img_output_path = os.path.join("cache", "{}_v.jpg".format(hash))
-        subprocess.call(
-            ["ffmpeg", "-i", p, "-ss", "00:00:00.000", "-vframes", "1", img_output_path]
-        )
-        return os.path.join("cache", "{}_v.jpg".format(hash))
+        cmd = "ffmpeg -i \"{}\" -ss 00:00:05.000 -vframes 1 -vf scale=640:-1 \"{}\"".format(p,img_output_path)
+        print(cmd)
+        os.system(cmd)
+        if not os.path.exists(img_output_path):
+            print("Failed at 5s, now try at 0s.")
+            cmd = "ffmpeg -i \"{}\" -ss 00:00:00.000 -vframes 1 -vf scale=640:-1 \"{}\"".format(p,img_output_path)
+            print(cmd)
+            os.system(cmd)
+        return img_output_path
 
 def delete(path):
     parent,fn = os.path.split(path)

@@ -1,15 +1,16 @@
 <!DOCTYPE html style="width: 100%;height: 100%;">
 
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <link rel="stylesheet" href="/{{misc['base']}}/static/style.css" type="text/css">
     {% if not misc['dark'] %}
     <link rel="stylesheet" href="/{{misc['base']}}/static/light.css" type="text/css">
     {% endif %}
+    <link rel="icon" type="image/x-icon" href="/{{misc['base']}}/static/icon32.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-<body onresize="init_scale();to_center();" style="width: 100%;height: 100%;" >
+<body style="width: 100%;height: 100%;">
     {% if misc['img'] %}
     <div id="imgv">
         {% if misc['og'] %}
@@ -26,144 +27,139 @@
     </div>
     {% endif %}
     <div id="ui_touchable">
-        <div id="s_og" onclick="scale_to_og()" ></div>
+        <div id="s_og" onclick="scale_to_og()"></div>
         <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn_q"></a>
-        <div id="ui_toggle_btn" onclick="toggle_ui()" ></div>
+        <div id="ui_toggle_btn" onclick="toggle_ui()"></div>
         {% if misc['img'] %}
         <div id="scale_toggle" onclick="toggle_scale()"></div>
+        {% else %}
+        <div id="scale_toggle" onclick="toggle_ui()"></div>
         {% endif %}
         <div id="refresh" onclick="refresh()"></div>
         <a id="next" href="/{{misc['base']}}/view/{{misc['next']}}"></a>
         <a id="prev" href="/{{misc['base']}}/view/{{misc['prev']}}"></a>
     </div>
     <div id="ui">
-        <div id="tree"> <div class="tree_item">{{misc['name']}}</div> </div>
-        <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn" onclick="show_cover()" >&larr;</a>
+        <div id="tree">
+            <div style="width: auto;max-width: 100%;"  class="tree_item">{{misc['name']}}</div>
+        </div>
+        <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn" style="background-image: url(/{{misc['base']}}/static/back.png);" onclick="show_cover()"></a>
         {% if not misc['img'] %}
         <div id="video-controls">
             <button type="button" id="play-pause">| |</button>
-            <input type="range" id="seek-bar" value="0">
-            <div id="ctime">-00:00:00</div>
+            <input type="range" id="seek-bar" step="0.25" value="0">
+            <div id="ctime">0:00/0:00</div>
         </div>
         {% endif %}
         <div id="bottom_deco"></div>
         <div id="buttons" onclick="toggle_ui()">
             <div class="btn" onclick="toggle_dark()">◒</div>
+            {% if misc['img'] %}
             <div class="btn" onclick="toggle_resample()">{% if misc['og'] %} OG {% else %} 2000 {% endif %}</div>
-            <div class="btn" onclick="document.getElementById('del_confirm').style.display = 'block'"><svg xmlns="http://www.w3.org/2000/svg" style="margin-top:0.75rem;" width="1.5rem" height="1.5rem" viewBox="0 0 24 24"><path fill="#fff" d="M3 6v18h18v-18h-18zm5 14c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm4-18v2h-20v-2h5.711c.9 0 1.631-1.099 1.631-2h5.315c0 .901.73 2 1.631 2h5.712z"/></svg></div>
+            {% endif %}
+            <div class="btn" onclick="document.getElementById('del_confirm').style.display = 'block'"><svg
+                    xmlns="http://www.w3.org/2000/svg" style="margin-top:1rem;" width="1rem" height="1rem"
+                    viewBox="0 0 24 24">
+                    
+                    <path {% if misc['dark'] %}fill="#fff"{% else %}fill="#000"{% endif %}
+                        d="M3 6v18h18v-18h-18zm5 14c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm4-18v2h-20v-2h5.711c.9 0 1.631-1.099 1.631-2h5.315c0 .901.73 2 1.631 2h5.712z" />
+                </svg></div>
         </div>
     </div>
     <div id="del_confirm">
         <div onclick="delete_f()" style="color: #992222;">✓</div>
-        <div onclick="document.getElementById('del_confirm').style.display = 'none'" style="color: #eee;" >☓</div>
+        <div onclick="document.getElementById('del_confirm').style.display = 'none'" style="color: #eee;">☓</div>
     </div>
     <div id="cover">
         <div class="loader"></div>
     </div>
     <script>
-        var og = {{misc["og"]}}
+        var og = {{ misc["og"]}}
         {% if misc['dark'] %}
         var dark = 1;
         {% else %}
         var dark = 0;
         {% endif %}
         {% if misc['img'] %}
-        var scale_type;
+        var scale_type=1;
         {% if "scale_type_overwrite" in misc %}
-        var scale_type_overwrite = {{misc['scale_type_overwrite']}};
+        var scale_type_overwrite = {{ misc['scale_type_overwrite']}};
         {% else %}
         var scale_type_overwrite = -1;
         {% endif %}
-        console.log("sto",scale_type_overwrite)
+        console.log("sto", scale_type_overwrite)
         var img = document.getElementById("imgd");
 
-        if(scale_type_overwrite>=0)
-        {
+        if (scale_type_overwrite >= 0) {
             scale_type = scale_type_overwrite;
         }
 
-        function to_center(){
+        function to_center() {
             var img = document.getElementById("imgd");
-            if(!img.complete)
-            {
+            if (!img.complete) {
                 return
             }
-            const imgv =  document.getElementById("imgv");
+            const imgv = document.getElementById("imgv");
             imgv.scrollTo({
-                top: imgv.scrollHeight/2 - window.outerHeight/2,
-                left: imgv.scrollWidth/2 - window.outerWidth/2,
+                top: imgv.scrollHeight / 2 - window.outerHeight / 2,
+                left: imgv.scrollWidth / 2 - window.outerWidth / 2,
                 behavior: "instant"
             })
-            console.log("to top:"+imgv.scrollHeight/2+" left:"+imgv.scrollWidth/2)
+            console.log("to top:" + imgv.scrollHeight / 2 + " left:" + imgv.scrollWidth / 2)
         }
-        function init_scale()
-        {
-            ori = imgd.height/imgd.width > window.outerHeight/window.outerWidth;
-            if(scale_type_overwrite >= 0){
-                if(scale_type==0)
-                {
+        function init_scale() {
+            ori = imgd.height / imgd.width > window.outerHeight / window.outerWidth;
+            if (scale_type == 1) {
+                if (ori) {
                     img.style.width = "auto";
                     img.style.height = "100%";
-                    if(ori)img.style.margin = "auto";
+                    if (ori) img.style.margin = "auto";
                     else img.style.margin = "0";
-                }else{
+                }
+                else {
+                    scale_type = 1;
                     img.style.width = "100%";
                     img.style.height = "auto";
-                    if(ori)img.style.margin = "0";
+                    if (ori) img.style.margin = "0";
                     else img.style.margin = "auto";
                 }
             }
-            else if(imgd.height/imgd.width > window.outerHeight/window.outerWidth)
-            {
-                scale_type = 0;
-                img.style.width = "auto";
-                img.style.height = "100%";
-                if(ori)img.style.margin = "auto";
-                else img.style.margin = "0";
-            }
             else
             {
-                scale_type = 1;
-                img.style.width = "100%";
-                img.style.height = "auto";
-                if(ori)img.style.margin = "0";
-                else img.style.margin = "auto";
+                if (ori) {
+                    img.style.width = "100%";
+                    img.style.height = "auto";
+                    if (ori) img.style.margin = "0";
+                    else img.style.margin = "auto";
+                }
+                else {
+                    img.style.width = "auto";
+                    img.style.height = "100%";
+                    if (ori) img.style.margin = "auto";
+                    else img.style.margin = "0";
+                }
             }
+
         }
-        if(img.complete)
-        {
+        if (img.complete) {
             init_scale()
             to_center()
         }
-        else
-        {
-            img.addEventListener('load',()=>{
+        else {
+            img.addEventListener('load', () => {
                 init_scale()
                 to_center()
             })
         }
-        
-        function toggle_scale()
-        {
-            ori = imgd.height/imgd.width > window.outerHeight/window.outerWidth;
+
+        function toggle_scale() {
+            ori = imgd.height / imgd.width > window.outerHeight / window.outerWidth;
             scale_type = 1 - scale_type;
-            if(scale_type==0)
-            {
-                img.style.width = "auto";
-                img.style.height = "100%";
-                if(ori)img.style.margin = "auto";
-                else img.style.margin = "0";
-            }else{
-                img.style.width = "100%";
-                img.style.height = "auto";
-                if(ori)img.style.margin = "0";
-                else img.style.margin = "auto";
-            }
+            init_scale()
             to_center();
-            fetch("/{{misc['base']}}/set_param/{{misc['parent']}}&fit="+scale_type, {method: 'GET'});
+            fetch("/{{misc['base']}}/set_param/{{misc['parent']}}&fit=" + scale_type, { method: 'GET' });
         }
-        function scale_to_og()
-        {
+        function scale_to_og() {
             img.style.width = "fit-content";
             img.style.height = "fit-content";
             img.style.margin = "0";
@@ -177,8 +173,8 @@
         var div5 = document.getElementById("s_og")
         var div6 = document.getElementById("back_btn_q")
         var div7 = document.getElementById("refresh")
-        const array = [div1,div2,div3,div4,div5,div6,div7]
-        array.forEach( (div) => {
+        const array = [div1, div2, div3, div4, div5, div6, div7]
+        array.forEach((div) => {
             div.addEventListener('touchstart', (event) => {
                 event.stopPropagation();
             });
@@ -192,7 +188,7 @@
 
             const target = document.querySelector('#imgv');
             // listen on the whole document; you could restrict this to an element though
-            div.addEventListener('wheel', function(event) {
+            div.addEventListener('wheel', function (event) {
                 target.scrollTop += event.deltaY;
             });
         });
@@ -206,8 +202,10 @@
         // Sliders
         var seekBar = document.getElementById("seek-bar");
         var ctime = document.getElementById("ctime");
-        
-        playButton.addEventListener("click", function() {
+
+        var seek_bar_hold = false;
+
+        playButton.addEventListener("click", function () {
             if (video.paused == true) {
                 // Play the video
                 video.play();
@@ -223,59 +221,76 @@
             }
         });
         // Event listener for the seek bar
-        seekBar.addEventListener("change", function() {
+        seekBar.addEventListener("change", function () {
             // Calculate the new time
+
             var time = video.duration * (seekBar.value / 100);
 
             // Update the video time
             video.currentTime = time;
         });
         // Update the seek bar as the video plays
-        video.addEventListener("timeupdate", function() {
+        video.addEventListener("timeupdate", function () {
             // Calculate the slider value
-            if(video.paused) return;
+            if (video.paused) return;
+            if (seek_bar_hold) return;
             var value = (100 / video.duration) * video.currentTime;
 
             // Update the slider value
             seekBar.value = value;
             currentTime = video.duration - video.currentTime;
-            hours = Math.floor(currentTime / 3600);
-            minutes = Math.floor((currentTime % 3600) / 60);
-            seconds = Math.floor(currentTime % 60);
+            // hours = Math.floor(currentTime / 3600);
+            c_minutes = Math.floor(video.currentTime / 60);
+            c_seconds = Math.floor(video.currentTime % 60);
+            t_minutes = Math.floor(video.duration / 60);
+            t_seconds = Math.floor(video.duration % 60);
 
-            formattedTime = `-${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+            formattedTime = `${c_minutes.toString()}:${c_seconds.toString().padStart(2, '0')}/${t_minutes.toString()}:${t_seconds.toString().padStart(2, '0')}`;
             ctime.innerText = formattedTime;
         });
         // Pause the video when the slider handle is being dragged
-        seekBar.addEventListener("mousedown", function() {
-            video.pause();
+        seekBar.addEventListener("touchstart", function () {
+            // video.pause();
+            seek_bar_hold = true;
+            // console.log("touch start")
+        }, false);
+
+        seekBar.addEventListener("mousedown", function () {
+            // video.pause();
+            seek_bar_hold = true;
         });
 
         // Play the video when the slider handle is dropped
-        seekBar.addEventListener("mouseup", function() {
-
+        seekBar.addEventListener("mouseup", function () {
             var time = video.duration * (seekBar.value / 100);
             video.currentTime = time;
-            video.play();
+            seek_bar_hold = false;
         });
-        function to_center(){};
+
+        seekBar.addEventListener("touchend", function () {
+            var time = video.duration * (seekBar.value / 100);
+            video.currentTime = time;
+            seek_bar_hold = false;
+            // console.log("touch end")
+        });
+
+        function to_center() { };
         {% endif %}
-        function toggle_dark()
-        {
+        function toggle_dark() {
             show_cover()
-            dark = 1-dark;
-            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?dark="+dark, {method: 'GET'}).then(
-                ()=>{
+            dark = 1 - dark;
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?dark=" + dark, { method: 'GET' }).then(
+                () => {
                     location.reload()
                 }
             )
         }
-        function toggle_resample()
-        {
+        function toggle_resample() {
             show_cover()
-            og = 1-og;
-            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?og="+og, {method: 'GET'}).then(
-                ()=>{
+            og = 1 - og;
+            fetch("/{{misc['base']}}/set_param/{{misc['current']}}?og=" + og, { method: 'GET' }).then(
+                () => {
                     location.reload()
                 }
             )
@@ -283,20 +298,18 @@
         const ui = document.getElementById("ui")
         const ui_touchable = document.getElementById("ui_touchable")
         var ui_on = false;
-        
+
         var timeout;
-        var full_btn = window.parent.document.getElementById('fulls'); 
+        var full_btn = window.parent.document.getElementById('fulls');
         full_btn.style.display = "none";
-        function hide_ui()
-        {
+        function hide_ui() {
             clearTimeout(timeout)
             ui_on = false
             ui.style.display = "none"
             full_btn.style.display = "none"
             ui_touchable.style.opacity = 0
         }
-        function show_ui()
-        {
+        function show_ui() {
             clearTimeout(timeout)
             ui_on = true
             ui.style.display = "block"
@@ -304,55 +317,48 @@
             ui_touchable.style.opacity = 1
             // timeout = setTimeout(hide_ui,5000)
         }
-        function toggle_ui()
-        {
-            if(ui_on)
-            {
+        function toggle_ui() {
+            if (ui_on) {
                 hide_ui()
             }
-            else{
+            else {
                 show_ui()
             }
         }
         function refresh() {
             document.body.style.filter = "invert(1)"
-            // if (isdark) {
-            //     document.body.style.backgroundColor = "#fff"
-            //     document.body.style.color = "#000"
-            // }
-            // else{
-            //     document.body.style.backgroundColor = "#000"
-            //     document.body.style.color = "#fff"
-            // }
             setTimeout(function () {
                 document.body.style.filter = "invert(0)"
-                // if (isdark) {
-                //     document.body.style.backgroundColor = "#000"
-                //     document.body.style.color = "#fff"
-                // }
-                // else{
-                //     document.body.style.backgroundColor = "#fff"
-                //     document.body.style.color = "#000"
-                // }
             }, 300)
         }
         {% if not misc['img'] %}
         show_ui()
-        // timeout = setTimeout(hide_ui,5000);
-        timeout = null
+        timeout = setTimeout(hide_ui,6000);
+        document.body.addEventListener("mousedown", function () {
+            clearTimeout(timeout);
+        });
+        document.body.addEventListener("touchstart", function () {
+            clearTimeout(timeout);
+        });
+        {% else %}
+        window.onresize = function(){ setTimeout(window_resize,100) };
         {% endif %}
-        function delete_f()
-        {
+        function delete_f() {
             show_cover()
-            fetch("/{{misc['base']}}/delete/{{misc['current']}}", {method: 'GET'}).then(
-                ()=>{
+            fetch("/{{misc['base']}}/delete/{{misc['current']}}", { method: 'GET' }).then(
+                () => {
                     location.replace("/{{misc['base']}}/tree/{{misc['parent']}}");
                 }
             )
         }
-        function show_cover()
-        {
+        function show_cover() {
             document.getElementById('cover').style.display = "block"
+        }
+
+        function window_resize()
+        {
+            init_scale();
+            to_center();
         }
     </script>
 </body>

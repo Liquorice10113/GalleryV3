@@ -6,11 +6,12 @@
     {% if not misc['dark'] %}
     <link rel="stylesheet" href="/{{misc['base']}}/static/light.css" type="text/css">
     {% endif %}
+    <link rel="icon" type="image/x-icon" href="/{{misc['base']}}/static/icon32.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
 <body onresize="updateGrid()">
-    <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn">&larr;</a>
+    <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn" style="background-image: url(/{{misc['base']}}/static/back.png);"></a>
     <div class="grid-container">
         {% for dir in items["dirs"] %}
         <a class="item dir_item" onclick="show_cover()" href="/{{misc['base']}}/tree/{{dir[0]}}">

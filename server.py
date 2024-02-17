@@ -212,4 +212,4 @@ def set_param(path):
     return "OK"
 
 
-app.run(debug=False, port=config.port, host="0.0.0.0")
+app.run(debug=False, port=config.port, host="0.0.0.0", threaded=True)
