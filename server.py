@@ -33,9 +33,55 @@ def index():
 def root():
     return tree("")
 
+def star():
+    param = utils.get_param("star")
+    star_list = list(utils.star_list)
+    if "p" in request.args:
+        p = int(request.args["p"])
+        param["index"] = p
+    else:
+        p = param["index"]
+    misc = {
+        "index": [
+            p,
+            ceil(len( utils.star_list ) / config.items_per_page),
+        ],
+        "current": "star",
+        "parent": "",
+        "base": config.url_base,
+        "dark": config.dark,
+        "tree": [],
+        "sort": param["sort"],
+        "r": param["r"],
+        "filter_on": False,
+        "filter": ""
+    }
+    if set(utils.star_list_sort_cache[param["sort"]]) != utils.star_list:
+        if param["sort"]=="name":
+            star_list.sort()
+        elif param["sort"]=="date":
+            star_list.sort(key=lambda x: utils.star_added_date[x] )
+        elif param["sort"] == "size":
+            star_list.sort(key=lambda x: os.path.getsize(os.path.join( config.base , x) ))
+        elif param["sort"] == "random":
+            utils.random.shuffle(star_list)
+        utils.star_list_sort_cache[param["sort"]] = star_list
+    else:
+        star_list = utils.star_list_sort_cache[param["sort"]]
+    if param["r"]:
+        star_list = star_list[::-1]
+    
+    items = {"dirs": [], "files": []}
+            
+    for fp in star_list[p * config.items_per_page : (p + 1) * config.items_per_page]:
+        items["files"].append((quote(fp)+"?from_star", os.path.split(fp)[-1] , not utils.is_img(fp)))
+    return render_template("tree.html", items=items, misc=misc, max=max, min=min)
 
 @app.route("/" + config.url_base + "/tree/<path:path>")
 def tree(path):
+    if path=="star" or path=="star/":
+        return star()
+
     path = unquote(path)
     print("Listing", path)
     param = utils.get_param(path)
@@ -90,6 +136,8 @@ def tree(path):
                 items["files"].append((quote(join(path, i)), i, not utils.is_img(i)))
         except:
             raise
+    if path == "":
+        items["dirs"].append(("star", "star", len( utils.star_list )))
     tree_s = path.split("/")
     for i in range(len(tree_s)):
         if not tree_s[i]:
@@ -104,29 +152,64 @@ def tree(path):
 def view(path):
     path = unquote(path)
     fp = join(config.base, path)
-    parent = join(*(os.path.split(path)[:-1]))
-    param = utils.get_param(parent)
-    full_dir = utils.listdir(join(config.base, parent), param["sort"], param["r"])
-    file_dir = [i for i in full_dir if utils.is_media(i)]
-    try:
-        location_index = full_dir.index(os.path.split(path)[-1])
-        location_in_p = floor(location_index / config.items_per_page)
-    except:
-        location_index = 0
-        location_in_p = 0
-    file_index = file_dir.index(os.path.split(path)[-1])
-    misc = {
-        "index": [file_index, len(file_dir)],
-        "current": quote(path),
-        "prev": quote(join(parent, file_dir[max(file_index - 1, 0)])),
-        "next": quote(join(parent, file_dir[min(file_index + 1, len(file_dir) - 1)])),
-        "parent": quote(parent) + "?p=" + str(location_in_p),
-        "base": config.url_base,
-        "dark": config.dark,
-        "img": utils.is_img(path),
-        "og": config.resample,
-        "name": os.path.split(path)[-1],
-    }
+
+    if "from_star" in request.args and path in utils.star_list:
+        star_list = list(utils.star_list)
+        param = utils.get_param("star")
+        if set(utils.star_list_sort_cache[param["sort"]]) != utils.star_list:
+            if param["sort"]=="name":
+                star_list.sort()
+            elif param["sort"]=="date":
+                star_list.sort(key=lambda x: utils.star_added_date[x] )
+            elif param["sort"] == "size":
+                star_list.sort(key=lambda x: os.path.getsize(os.path.join( config.base , x) ))
+            elif param["sort"] == "random":
+                utils.random.shuffle(star_list)
+            utils.star_list_sort_cache[param["sort"]] = star_list
+        else:
+            star_list = utils.star_list_sort_cache[param["sort"]]
+        if param["r"]:
+            star_list = star_list[::-1]
+        star_index = star_list.index(path)
+        misc = {
+            "index": [star_index, len(utils.star_list)],
+            "current": quote(path),
+            "prev": quote(star_list[max(star_index - 1, 0)])+"?from_star",
+            "next": quote(star_list[min(star_index + 1, len(utils.star_list) - 1)])+"?from_star",
+            "parent": "star?p=" + str( floor(star_index/config.items_per_page) ),
+            "base": config.url_base,
+            "dark": config.dark,
+            "img": utils.is_img(path),
+            "og": config.resample,
+            "name": os.path.split(path)[-1],
+            "star": 1
+        }
+    else:
+        parent = join(*(os.path.split(path)[:-1]))
+        param = utils.get_param(parent)
+        full_dir = utils.listdir(join(config.base, parent), param["sort"], param["r"])
+        file_dir = [i for i in full_dir if utils.is_media(i)]
+
+        file_index = file_dir.index(os.path.split(path)[-1])
+        try:
+            location_index = full_dir.index(os.path.split(path)[-1])
+            location_in_p = floor(location_index / config.items_per_page)
+        except:
+            location_index = 0
+            location_in_p = 0
+        misc = {
+            "index": [file_index, len(file_dir)],
+            "current": quote(path),
+            "prev": quote(join(parent, file_dir[max(file_index - 1, 0)])),
+            "next": quote(join(parent, file_dir[min(file_index + 1, len(file_dir) - 1)])),
+            "parent": quote(parent) + "?p=" + str(location_in_p),
+            "base": config.url_base,
+            "dark": config.dark,
+            "img": utils.is_img(path),
+            "og": config.resample,
+            "name": os.path.split(path)[-1],
+            "star": path in utils.star_list
+        }
     if param["fit"] >= 0:
         misc["scale_type_overwrite"] = param["fit"]
     return render_template("view.html", misc=misc, max=max, min=min)
@@ -146,6 +229,8 @@ def delete(path):
 
 @app.route("/" + config.url_base + "/thumb/<path:path>")
 def thumb(path, depth=0):
+    if path == "star" or path == "star/":
+        return send_file("./static/star_holo.webp")
     if "cache" in path:
         print("Warning! User should not have access to cache folder!")
         return send_file("./static/folder.png")
@@ -208,8 +293,18 @@ def set_param(path):
         print("Set sort to", param["sort"])
     if "r" in request.args:
         param["r"] = int(request.args["r"])
+    if "star" in request.args:
+        param["star"] = int(request.args["star"])
+        if param["star"] == 1:
+            utils.star_list.add(path)
+            utils.star_added_date[path] = utils.time.time()
+            utils.dump_cache(True)
+        elif path in utils.star_list:
+            utils.star_list.remove(path)
+            utils.dump_cache(True)
+
     utils.param_cache[path] = param
     return "OK"
 
 
-app.run(debug=False, port=config.port, host="0.0.0.0", threaded=True)
+app.run(debug=True, port=config.port, host="0.0.0.0", threaded=True)

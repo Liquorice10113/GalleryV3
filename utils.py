@@ -12,30 +12,52 @@ file_list_scan_time = dict()
 file_list_sorted_cache = dict()
 param_cache = dict()
 
+star_list =set()
+star_added_date = dict()
+star_list_sort_cache = {
+    "name":[],
+    "date":[],
+    "size":[],
+    "random":[]
+}
+
 filters = dict()
 
 last_scan_time = -1
 
 ls_lock = Lock()
 
-def dump_cache():
-    global file_list_cache,file_list_scan_time,file_list_sorted_cache,param_cache
+def dump_cache(star_only=False):
+    global file_list_cache,file_list_scan_time,file_list_sorted_cache,param_cache,star_list,star_added_date
+    if not star_only:
+        data = {
+            "file_list_cache":file_list_cache,
+            "file_list_scan_time":file_list_scan_time,
+            "file_list_sorted_cache":file_list_sorted_cache,
+            "param_cache":param_cache
+        }
+        json.dump(data,open("cache.json",'w'))
     data = {
-        "file_list_cache":file_list_cache,
-        "file_list_scan_time":file_list_scan_time,
-        "file_list_sorted_cache":file_list_sorted_cache,
-        "param_cache":param_cache
-    }
-    json.dump(data,open("cache.json",'w'))
+        "star_list":list(star_list),
+        "star_added_date":star_added_date
+        }
+    json.dump(data,open("stars.json",'w'))
+    
 
 
 def load_cache():
-    global file_list_cache,file_list_scan_time,file_list_sorted_cache,param_cache
-    data = json.load(open("cache.json",'r'))
-    file_list_cache = data['file_list_cache']
-    file_list_scan_time = data['file_list_scan_time']
-    file_list_sorted_cache = data['file_list_sorted_cache']
-    param_cache = data['param_cache']
+    global file_list_cache,file_list_scan_time,file_list_sorted_cache,param_cache,star_list,star_added_date
+
+    if os.path.exists("cache.json"):
+        data = json.load(open("cache.json",'r'))
+        file_list_cache = data['file_list_cache']
+        file_list_scan_time = data['file_list_scan_time']
+        file_list_sorted_cache = data['file_list_sorted_cache']
+        param_cache = data['param_cache']
+    if os.path.exists("stars.json"):
+        data = json.load(open("stars.json",'r'))
+        star_list = set(data['star_list'])
+        star_added_date = data['star_added_date']
 
 
 file_types = [
@@ -77,6 +99,7 @@ def get_param(path):
             "sort": config.sort_type,
             "r": config.sort_reverse,
             "index": 0,
+            "star": 0
         }
     print("Get", path)
     print(param)
@@ -195,5 +218,4 @@ def delete(path):
     if parent in file_list_cache:
         del file_list_cache[parent]
 
-if os.path.exists("cache.json"):
-    load_cache()
+load_cache()

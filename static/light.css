@@ -8,6 +8,7 @@ body {
 }
 
 #tree {
+    background: none;
     background-color: #fff;
     color: #000;
     backdrop-filter: none;
@@ -18,13 +19,14 @@ body {
 }
 
 #bottom_deco {
+    background: none;
     background-color: #fff;
     color: #000;
     backdrop-filter: none;
 }
 
 #back_btn {
-    color: #000;
+    filter: invert(0);
 }
 
 .page_btn{
@@ -50,4 +52,10 @@ color: #000;
 #page_prev
 {
 color: #333;
+}
+
+#play-pause
+{
+    color: #000;
+    border: #00000033 0.1rem solid;
 }
