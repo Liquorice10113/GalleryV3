@@ -10,7 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-<body style="width: 100%;height: 100%;">
+<body style="width: 100%;height: 100%;" ondragstart="return false;" ondrop="return false;" ontouchmove="pinch(event)">
     {% if misc['img'] %}
     <div id="imgv">
         {% if misc['og'] %}
@@ -27,14 +27,10 @@
     </div>
     {% endif %}
     <div id="ui_touchable">
-        <div id="s_og" onclick="scale_to_og()"></div>
+        <div id="s_og" onclick="toggle_scale()"></div>
         <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn_q"></a>
         <div id="ui_toggle_btn" onclick="toggle_ui()"></div>
-        {% if misc['img'] %}
-        <div id="scale_toggle" onclick="toggle_scale()"></div>
-        {% else %}
         <div id="scale_toggle" onclick="toggle_ui()"></div>
-        {% endif %}
         <div id="refresh" onclick="refresh()"></div>
         <a id="next" href="/{{misc['base']}}/view/{{misc['next']}}"></a>
         <a id="prev" href="/{{misc['base']}}/view/{{misc['prev']}}"></a>
@@ -44,16 +40,20 @@
             <div style="width: auto;max-width: 100%;"  class="tree_item">{{misc['name']}}</div>
         </div>
         <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn" style="background-image: url(/{{misc['base']}}/static/back.png);" onclick="show_cover()"></a>
+        <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn_mini">←</a>
         {% if not misc['img'] %}
         <div id="video-controls">
             <button type="button" id="play-pause">| |</button>
-            <input type="range" id="seek-bar" step="0.25" value="0">
+            <input type="range" id="seek-bar" step="0.25" value="0" onkeydown="event.preventDefault()">
             <div id="ctime">0:00/0:00</div>
         </div>
+        {% else %}
+        <div id="zoom_in" onclick="zoom(0.5,0.5,1.1)">+</div>
+        <div id="zoom_out" onclick="zoom(0.5,0.5,0.9)">-</div>
         {% endif %}
         <div id="bottom_deco" onclick="toggle_ui()"></div>
         <div id="buttons">
-            <div class="btn" onclick="toggle_dark()">◒</div>
+            <div class="btn" onclick="toggle_dark()">☀</div>
             {% if misc['img'] %}
             <div class="btn" onclick="toggle_resample()">{% if misc['og'] %} OG {% else %} 2000 {% endif %}</div>
             {% endif %}
@@ -66,13 +66,22 @@
                 </svg></div>
             <div class="btn" id="star_btn" onclick="toggle_star()">?</div>
         </div>
+        <div class="hint" id="h_l">⟨</div>
+        {% if misc['img'] %}
+        <div class="hint" id="h_m">「 」</div>
+        {% endif %}
+        <div class="hint" id="h_r">⟩</div>
     </div>
+    <!-- <div class="hint" id="h_b" onclick="toggle_ui()"></div> -->
     <div id="del_confirm">
         <div onclick="delete_f()" style="color: #992222;">✓</div>
         <div onclick="document.getElementById('del_confirm').style.display = 'none'" style="color: #eee;">☓</div>
     </div>
     <div id="cover">
         <div class="loader"></div>
+    </div>
+    <div id="vol_disp">
+        100
     </div>
     <script>
         var og = {{ misc["og"]}}
@@ -95,41 +104,55 @@
         {% else %}
         var scale_type_overwrite = -1;
         {% endif %}
-        console.log("sto", scale_type_overwrite)
+        
+
+        var pinch_dist = 0;
         var img = document.getElementById("imgd");
 
         if (scale_type_overwrite >= 0) {
             scale_type = scale_type_overwrite;
         }
-
+        var imgv = document.getElementById("imgv");
         function to_center() {
-            var img = document.getElementById("imgd");
             if (!img.complete) {
                 return
             }
-            const imgv = document.getElementById("imgv");
             imgv.scrollTo({
-                top: imgv.scrollHeight / 2 - window.outerHeight / 2,
-                left: imgv.scrollWidth / 2 - window.outerWidth / 2,
+                top: imgv.scrollHeight / 2 - window.innerHeight / 2,
+                left: imgv.scrollWidth / 2 - window.innerWidth / 2,
                 behavior: "instant"
             })
-            console.log("to top:" + imgv.scrollHeight / 2 + " left:" + imgv.scrollWidth / 2)
         }
+        
+        function fill_border()
+        {
+            if(imgd.height<window.innerHeight)
+            {
+                imgd.style.marginTop = (window.innerHeight-imgd.height)/2 + "px";
+            }
+            else{
+                imgd.style.marginTop = 0;
+            }
+            if(imgd.width<window.innerWidth)
+            {
+                imgd.style.marginLeft = (window.innerWidth-imgd.width)/2 + "px";
+            }
+            else{
+                imgd.style.marginLeft = 0;
+            }
+        }
+
         function init_scale() {
-            ori = imgd.height / imgd.width > window.outerHeight / window.outerWidth;
+            ori = imgd.height / imgd.width > window.innerHeight / window.innerWidth;
+            // img.style.margin = "auto";
             if (scale_type == 1) {
                 if (ori) {
                     img.style.width = "auto";
                     img.style.height = "100%";
-                    if (ori) img.style.margin = "auto";
-                    else img.style.margin = "0";
                 }
                 else {
-                    scale_type = 1;
                     img.style.width = "100%";
                     img.style.height = "auto";
-                    if (ori) img.style.margin = "0";
-                    else img.style.margin = "auto";
                 }
             }
             else
@@ -137,16 +160,13 @@
                 if (ori) {
                     img.style.width = "100%";
                     img.style.height = "auto";
-                    if (ori) img.style.margin = "0";
-                    else img.style.margin = "auto";
                 }
                 else {
                     img.style.width = "auto";
                     img.style.height = "100%";
-                    if (ori) img.style.margin = "auto";
-                    else img.style.margin = "0";
                 }
             }
+            fill_border();
 
         }
         if (img.complete) {
@@ -161,7 +181,7 @@
         }
 
         function toggle_scale() {
-            ori = imgd.height / imgd.width > window.outerHeight / window.outerWidth;
+            ori = imgd.height / imgd.width > window.innerHeight / window.innerWidth;
             scale_type = 1 - scale_type;
             init_scale()
             to_center();
@@ -178,19 +198,22 @@
         var div2 = document.getElementById("next")
         var div3 = document.getElementById("prev")
         var div4 = document.getElementById("ui_toggle_btn")
-        var div5 = document.getElementById("s_og")
+        // var div5 = document.getElementById("s_og")
         var div6 = document.getElementById("back_btn_q")
         var div7 = document.getElementById("refresh")
-        const array = [div1, div2, div3, div4, div5, div6, div7]
+        const array = [div1, div2, div3, div4, div6, div7]
         array.forEach((div) => {
             div.addEventListener('touchstart', (event) => {
+                pinch_dist = 0;
                 event.stopPropagation();
             });
             div.addEventListener('touchmove', (event) => {
+                pinch(event);
                 event.stopPropagation();
                 div.style.pointerEvents = 'none';
             });
             div.addEventListener('touchend', () => {
+                pinch_dist = 0;
                 div.style.pointerEvents = 'auto';
             });
 
@@ -200,10 +223,90 @@
                 target.scrollTop += event.deltaY;
             });
         });
+        document.onkeyup = function (e) {
+            // e = e || window.event;
+            // use e.keyCode
+            key = e.key;
+
+            if(key=="PageUp")
+            {
+                window.location.href = "/{{misc['base']}}/view/{{misc['prev']}}";
+            }
+            if(key=="PageDown")
+            {
+                window.location.href = "/{{misc['base']}}/view/{{misc['next']}}";
+            }
+        };
+        document.onkeydown = function (e) {
+            // e = e || window.event;
+            // use e.keyCode
+            key = e.key;
+            if(key=="Backspace")
+            {
+                window.location.href = "/{{misc['base']}}/tree/{{misc['parent']}}";
+            }
+        };
+
+        function refresh() {
+            document.body.style.filter = "invert(1)"
+            setTimeout(function () {
+                document.body.style.filter = "invert(0)"
+            }, 300)
+        }
+
+
+
+        function zoom(x,y,fac)
+        {
+            if(img.style.height == "auto")
+            {  
+                if(parseInt(img.style.width)*fac<20) return;   
+                if(parseInt(img.style.width)*fac>500) return;
+                img.style.width = parseInt(img.style.width)*fac +"%";
+    
+            }
+            else{
+                
+                if(parseInt(img.style.height)*fac<20) return;  
+                if(parseInt(img.style.height)*fac>500) return; 
+                img.style.height = parseInt(img.style.height)*fac +"%";
+    
+            }
+
+            imgv.scrollLeft = imgv.scrollLeft*fac + (fac-1-0.01676)*window.innerWidth*x;
+            imgv.scrollTop = imgv.scrollTop*fac + (fac-1-0.002)*window.innerHeight*y;
+
+            fill_border();
+        }
+
+        var centerx = 0.5;
+        var centery = 0.5;
+
+        function pinch(event){
+            console.log("mov");
+            if (event.touches.length === 2) {
+                t1x = event.touches[0].clientX
+                t1y = event.touches[0].clientY 
+                t2x = event.touches[1].clientX
+                t2y = event.touches[1].clientY
+                centerx = (t1x+t2x)/2/window.innerWidth
+                centery = (t1y+t2y)/2/window.innerHeight
+                dist = Math.sqrt((t2x-t1x)**2 + (t2y-t1y)**2)
+                if(pinch_dist!=0)
+                {
+                    dist_alpha = dist/pinch_dist
+                    if(Math.abs(dist_alpha-1)>0.005)
+                        zoom(centerx,centery,dist_alpha);
+                }
+                pinch_dist = dist;
+                event.preventDefault();
+            }
+        }
+
         {% else %}
         // Video
         var video = document.getElementById("video");
-
+        video.volume = {{ misc['vol'] }};
         // Buttons
         var playButton = document.getElementById("play-pause");
 
@@ -240,7 +343,7 @@
         // Update the seek bar as the video plays
         video.addEventListener("timeupdate", function () {
             // Calculate the slider value
-            if (video.paused) return;
+            // if (video.paused) return;
             if (seek_bar_hold) return;
             var value = (100 / video.duration) * video.currentTime;
 
@@ -283,13 +386,111 @@
             // console.log("touch end")
         });
 
+        document.onkeyup = function (e) {
+            // e = e || window.event;
+            // use e.keyCode
+            key = e.key;
+            // console.log(key);
+            if(key==" ")
+            {
+                if (video.paused == true) {
+                    video.play();
+                    playButton.innerHTML = "| |";
+                } else {
+                    video.pause();
+                    playButton.innerHTML = '<span style="font-size: 2rem;">▸</span>';
+                }
+            }
+            if(key=="PageUp")
+            {
+                window.location.href = "/{{misc['base']}}/view/{{misc['prev']}}";
+            }
+            if(key=="PageDown")
+            {
+                window.location.href = "/{{misc['base']}}/view/{{misc['next']}}";
+            }
+        }
+        document.onkeydown = function (e) {
+            // e = e || window.event;
+            // use e.keyCode
+            key = e.key;
+
+            if(key=="ArrowRight")
+            {
+                video.currentTime += 1;
+            }
+            if(key=="ArrowLeft")
+            {
+                video.currentTime -= 1;
+            }
+            if(key=="ArrowUp")
+            {
+                if(video.volume<=0.9)
+                {
+                    video.volume += 0.1;
+                    fetch("/{{misc['base']}}/set_param/?vol=" + video.volume, { method: 'GET' });
+                }
+                if(video.volume>0.99)
+                {
+                    video.volume = 1
+                }
+                show_vol();
+            }
+            if(key=="ArrowDown")
+            {
+                if(video.volume>=0.1)
+                {
+                    video.volume -= 0.1;
+                    fetch("/{{misc['base']}}/set_param/?vol=" + video.volume, { method: 'GET' });                    
+                }
+                if(video.volume<0.01)
+                {
+                    video.volume = 0;
+                }
+                show_vol();
+            }
+            if(key=="Backspace")
+            {
+                window.location.href = "/{{misc['base']}}/tree/{{misc['parent']}}";
+            }
+        };
+
+        document.onwheel = function (e) {
+            if(e.deltaY<0)
+            {
+                video.currentTime -= 1;
+            }
+            else
+            {
+                video.currentTime += 1;
+            }
+        
+        }
+
+
         function to_center() { };
+        function refresh() { };
+        function pinch(event) { }
+        var show_vol_timeout = null;
+        function show_vol()
+        {
+            clearTimeout(show_vol_timeout);
+            vol_disp = document.getElementById("vol_disp")
+            vol_disp.innerText = "🔈" + Math.round(video.volume*100);
+            vol_disp.style.display = "block";
+            show_vol_timeout = setTimeout(function(){
+                document.getElementById("vol_disp").style.display = "none";
+            } ,1000)
+        }
+
         {% endif %}
         function toggle_dark() {
             show_cover()
             dark = 1 - dark;
             fetch("/{{misc['base']}}/set_param/{{misc['current']}}?dark=" + dark, { method: 'GET' }).then(
                 () => {
+                    if(dark) full_btn.style.color = "#fff";
+                    else full_btn.style.color = "#000";
                     location.reload()
                 }
             )
@@ -333,12 +534,6 @@
                 show_ui()
             }
         }
-        function refresh() {
-            document.body.style.filter = "invert(1)"
-            setTimeout(function () {
-                document.body.style.filter = "invert(0)"
-            }, 300)
-        }
         {% if not misc['img'] %}
         show_ui()
         timeout = setTimeout(hide_ui,6000);
@@ -359,8 +554,13 @@
                 }
             )
         }
-        function show_cover() {
-            document.getElementById('cover').style.display = "block"
+        function show_cover()
+        {
+            setTimeout(
+                function(){document.getElementById('cover').style.display = "block"},
+                500
+            )
+            
         }
 
         function window_resize()

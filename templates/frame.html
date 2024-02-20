@@ -1,28 +1,37 @@
 <!DOCTYPE html>
 
 <head>
-    <meta charset="utf-8"/>
+    <meta charset="utf-8" />
     <title>Gallery V3</title>
     <link rel="stylesheet" href="/{{base}}/static/style.css" type="text/css">
     <link rel="manifest" href="/{{base}}/gv3.webmanifest" crossorigin="use-credentials">
     <link rel="icon" type="image/x-icon" href="/{{base}}/static/icon32.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        *{
-            padding: o;
-            margin: 0;
+        @font-face {
+            font-family: "arial";
+            src: url(/gv3/static/arial.ttf) format("truetype");
         }
-        body{
+
+        * {
+            padding: 0;
+            margin: 0;
+            font-family: "arial", "'Courier New'";
+        }
+
+        body {
             background-color: #000;
         }
-        iframe{
+
+        iframe {
             position: fixed;
             overflow: hidden;
             height: 100%;
             width: 100%;
             border: none;
         }
-        #fulls{
+
+        #fulls {
             position: fixed;
             left: 0;
             bottom: 4px;
@@ -31,7 +40,7 @@
     </style>
 </head>
 
-<body>
+<body ondragstart="return false;" ondrop="return false;">
     <iframe id="if" src="/{{base}}/tree/"></iframe>
     <div id="fulls" class="btn">⤢</div>
     <script>

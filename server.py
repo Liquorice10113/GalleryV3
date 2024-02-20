@@ -182,7 +182,8 @@ def view(path):
             "img": utils.is_img(path),
             "og": config.resample,
             "name": os.path.split(path)[-1],
-            "star": 1
+            "star": 1,
+            "vol": utils.vol
         }
     else:
         parent = join(*(os.path.split(path)[:-1]))
@@ -208,7 +209,8 @@ def view(path):
             "img": utils.is_img(path),
             "og": config.resample,
             "name": os.path.split(path)[-1],
-            "star": path in utils.star_list
+            "star": path in utils.star_list,
+            "vol": utils.vol
         }
     if param["fit"] >= 0:
         misc["scale_type_overwrite"] = param["fit"]
@@ -282,6 +284,9 @@ def set_param(path):
         return "OK"
     if "og" in request.args:
         config.resample = int(request.args["og"])
+        return "OK"
+    if "vol" in request.args:
+        utils.vol = float(request.args["vol"])
         return "OK"
     print(request.args)
     param = utils.get_param(path)

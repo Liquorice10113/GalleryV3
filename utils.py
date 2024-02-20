@@ -7,6 +7,8 @@ import natsort
 from threading import Lock
 import random
 
+vol = 1
+
 file_list_cache = dict()
 file_list_scan_time = dict()
 file_list_sorted_cache = dict()

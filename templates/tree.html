@@ -10,8 +10,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-<body onresize="updateGrid()">
+<body onresize="updateGrid()" ondragstart="return false;" ondrop="return false;">
     <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn" style="background-image: url(/{{misc['base']}}/static/back.png);"></a>
+    <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn_mini">←</a>
     <div class="grid-container">
         {% for dir in items["dirs"] %}
         <a class="item dir_item" onclick="show_cover()" href="/{{misc['base']}}/tree/{{dir[0]}}">
@@ -35,7 +36,7 @@
     </div>
     <div id="ui" style="display: block;">
         <div id="tree">
-            <a class="tree_item" onclick="show_cover()" href="/{{misc['base']}}/tree/">/</a>
+            <a class="tree_item" onclick="show_cover()" href="/{{misc['base']}}/tree/" style="font-size: 1.5rem;">⌂</a>
             {% for i in misc['tree'] %}
             <a class="tree_item" onclick="show_cover()" href="/{{misc['base']}}/tree/{{i[1]}}">{{i[0]}}</a>
             {% endfor %}
@@ -57,7 +58,7 @@
 
         </div>
         <div id="buttons">
-            <div class="btn" onclick="toggle_dark()">◒</div>
+            <div class="btn" onclick="toggle_dark()">☀</div>
             <div class="btn" onclick="toggle_sort()">{{misc['sort']}}</div>
             <div class="btn" onclick="toggle_r()">{% if misc['r'] %}&darr;{% else %}&uarr;{% endif %}</div>
             <div class="btn" onclick="clear_cache()">&#8635;</div>
@@ -83,16 +84,21 @@
         const fontSize = parseFloat(window.getComputedStyle(document.documentElement).fontSize)
         function updateGrid() {
             windowW = window.innerWidth;
-            var col = Math.floor(windowW / (10 * fontSize));
+            var col = Math.floor(windowW / (12 * fontSize));
             grid = document.querySelector(".grid-container");
             grid.style.gridTemplateColumns = `repeat(${col}, 1fr)`;
         }
-        updateGrid()
+
+        var full_btn = window.parent.document.getElementById('fulls');
+        if(dark) full_btn.style.color = "#fff";
+        else full_btn.style.color = "#000";
         function toggle_dark() {
             dark = 1 - dark;
             show_cover()
             fetch("/{{misc['base']}}/set_param/{{misc['current']}}?dark=" + dark, { method: 'GET' }).then(
                 () => {
+                    if(dark) full_btn.style.color = "#fff";
+                    else full_btn.style.color = "#000";
                     location.reload()
                 }
             )
@@ -189,8 +195,43 @@
         }
         function show_cover()
         {
-            document.getElementById('cover').style.display = "block"
+            setTimeout(
+                function(){document.getElementById('cover').style.display = "block"},
+                500
+            )
+            
         }
+
+        document.getElementById("filter_str").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            confirm_filter();
+        }
+        });
+        // document.onkeydown = function (e) {
+        //     // e = e || window.event;
+        //     // use e.keyCode
+        //     key = e.key;
+
+        //     if(key=="PageDown")
+        //     {
+        //         window.location.href = "/{{misc['base']}}/tree/{{misc['current']}}?p={{min(misc['index'][0]+1,misc['index'][1]-1)}}"
+        //     }
+        //     if(key=="PageUp")
+        //     {
+        //         window.location.href = "/{{misc['base']}}/tree/{{misc['current']}}?p={{max(misc['index'][0]-1,0)}}"
+        //     }
+        // };
+        // document.onkeydown = function (e) {
+        //     // e = e || window.event;
+        //     // use e.keyCode
+        //     key = e.key;
+        //     if(key=="Backspace")
+        //     {
+        //         window.location.href = "/{{misc['base']}}/tree/{{misc['parent']}}";
+        //     }
+        // };
+        updateGrid()
     </script>
 </body>
 
