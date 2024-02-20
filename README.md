@@ -6,8 +6,11 @@ Supports images/gifs/videos. Optimized for mobile device.
 For my personal use, hosted on my homelab.
 
 * Extremely easy to run.
-* Folder scans and thumbnails are created on demand.
+* Folder scanning and thumbnail creation are performed on demand (no background activities at all, might take a while scanning a folder for the first time).
 * Can be installed as PWA (requires https, use nginx or something as reverse proxy).
+* First image within a folder will be set as folder thumbnail, useful for viewing comics.
+* Simple searching & sorting.
+* A light mode.
 
 ## Requirement
 * python3
@@ -50,4 +53,6 @@ With touchscreen, pinch to zoom in and out ( it's quite janky though, still work
 ![alt thumbnail](res/1.png)
 ![alt thumbnail](res/2.png)
 ![alt thumbnail](res/3.png)
+Light mode:
+![alt thumbnail](res/4.png)
 
