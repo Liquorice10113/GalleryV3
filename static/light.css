@@ -16,6 +16,7 @@ body {
 
 .tree_item {
     color: #000;
+    background: none;
 }
 
 #bottom_deco {
@@ -25,12 +26,10 @@ body {
     backdrop-filter: none;
 }
 
-#back_btn {
-    filter: invert(0);
-}
-
+#back_btn,
 #back_btn_mini {
     color: #000;
+    background: none;
 }
 
 .page_btn {
@@ -52,6 +51,7 @@ body {
 #page_next,
 #page_prev {
     color: #333;
+    background: none;
 }
 
 #play-pause {
@@ -122,4 +122,14 @@ body {
     width: 14rem;
     margin-top: 0.35rem;
     margin-left: 0.3rem;
+}
+#zoom_in,
+#zoom_out,
+#buttons,
+#pages_scroll{
+    background: none;
+}
+
+#imgd {
+    transition: none;
 }

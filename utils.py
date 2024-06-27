@@ -1,6 +1,11 @@
-import os,json,time,shutil
+import os, json, time, shutil
 import config
 from PIL import Image
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except:
+    print("Heif not supported.\nTry python3 -m pip install pillow-heif.")
 from hashlib import md5
 import subprocess
 import natsort
@@ -14,14 +19,9 @@ file_list_scan_time = dict()
 file_list_sorted_cache = dict()
 param_cache = dict()
 
-star_list =set()
+star_list = set()
 star_added_date = dict()
-star_list_sort_cache = {
-    "name":[],
-    "date":[],
-    "size":[],
-    "random":[]
-}
+star_list_sort_cache = {"name": [], "date": [], "size": [], "rand": []}
 
 filters = dict()
 
@@ -29,37 +29,34 @@ last_scan_time = -1
 
 ls_lock = Lock()
 
+
 def dump_cache(star_only=False):
-    global file_list_cache,file_list_scan_time,file_list_sorted_cache,param_cache,star_list,star_added_date
+    global file_list_cache, file_list_scan_time, file_list_sorted_cache, param_cache, star_list, star_added_date
     if not star_only:
         data = {
-            "file_list_cache":file_list_cache,
-            "file_list_scan_time":file_list_scan_time,
-            "file_list_sorted_cache":file_list_sorted_cache,
-            "param_cache":param_cache
+            "file_list_cache": file_list_cache,
+            "file_list_scan_time": file_list_scan_time,
+            "file_list_sorted_cache": file_list_sorted_cache,
+            "param_cache": param_cache,
         }
-        json.dump(data,open("cache.json",'w'))
-    data = {
-        "star_list":list(star_list),
-        "star_added_date":star_added_date
-        }
-    json.dump(data,open("stars.json",'w'))
-    
+        json.dump(data, open("cache.json", "w"))
+    data = {"star_list": list(star_list), "star_added_date": star_added_date}
+    json.dump(data, open("stars.json", "w"))
 
 
 def load_cache():
-    global file_list_cache,file_list_scan_time,file_list_sorted_cache,param_cache,star_list,star_added_date
+    global file_list_cache, file_list_scan_time, file_list_sorted_cache, param_cache, star_list, star_added_date
 
     if os.path.exists("cache.json"):
-        data = json.load(open("cache.json",'r'))
-        file_list_cache = data['file_list_cache']
-        file_list_scan_time = data['file_list_scan_time']
-        file_list_sorted_cache = data['file_list_sorted_cache']
-        param_cache = data['param_cache']
+        data = json.load(open("cache.json", "r"))
+        file_list_cache = data["file_list_cache"]
+        file_list_scan_time = data["file_list_scan_time"]
+        file_list_sorted_cache = data["file_list_sorted_cache"]
+        param_cache = data["param_cache"]
     if os.path.exists("stars.json"):
-        data = json.load(open("stars.json",'r'))
-        star_list = set(data['star_list'])
-        star_added_date = data['star_added_date']
+        data = json.load(open("stars.json", "r"))
+        star_list = set(data["star_list"])
+        star_added_date = data["star_added_date"]
 
 
 file_types = [
@@ -75,7 +72,8 @@ file_types = [
     "avi",
     "mpeg",
     "mov",
-    "m4v"
+    "m4v",
+    "mview"
 ]
 image_types = ["jpg", "jpeg", "png", "gif", "webp", "bmp"]
 
@@ -101,15 +99,16 @@ def get_param(path):
             "sort": config.sort_type,
             "r": config.sort_reverse,
             "index": 0,
-            "star": 0
+            "star": 0,
+            "scroll": 0,
         }
-    print("Get", path)
-    print(param)
+    # print("Get", path)
+    # print(param)
     return param
 
 
 def listdir(p, sort_type="name", reverse=config.sort_reverse):
-    global ls_lock,last_scan_time
+    global ls_lock, last_scan_time
     try:
         ls_lock.acquire()
         if not p in file_list_cache or (
@@ -134,12 +133,15 @@ def listdir(p, sort_type="name", reverse=config.sort_reverse):
             ]
             file_list_cache[p] = files
             file_list_scan_time[p] = os.path.getmtime(p)
-            for t_sort_type in ['name','date','size','random']:
-                if p in file_list_sorted_cache and t_sort_type in file_list_sorted_cache[p]:
+            for t_sort_type in ["name", "date", "size", "rand"]:
+                if (
+                    p in file_list_sorted_cache
+                    and t_sort_type in file_list_sorted_cache[p]
+                ):
                     del file_list_sorted_cache[p][t_sort_type]
-        if not ( p in file_list_sorted_cache and sort_type in file_list_sorted_cache[p] ):
+        if not (p in file_list_sorted_cache and sort_type in file_list_sorted_cache[p]):
             files = file_list_cache[p]
-            if not  p in file_list_sorted_cache:
+            if not p in file_list_sorted_cache:
                 file_list_sorted_cache[p] = dict()
             if sort_type == "name":
                 file_list_sorted_cache[p][sort_type] = natsort.natsorted(files)
@@ -151,7 +153,7 @@ def listdir(p, sort_type="name", reverse=config.sort_reverse):
                 file_list_sorted_cache[p][sort_type] = sorted(
                     files, key=lambda x: os.path.getsize(os.path.join(p, x))
                 )
-            elif sort_type == "random":
+            elif sort_type == "rand":
                 file_list_sorted_cache[p][sort_type] = list(files)
                 random.shuffle(file_list_sorted_cache[p][sort_type])
             else:
@@ -162,31 +164,36 @@ def listdir(p, sort_type="name", reverse=config.sort_reverse):
                 last_scan_time = time.time()
         ls_lock.release()
         if p in filters:
-            res = [i for i in file_list_sorted_cache[p][sort_type] if filters[p].lower() in i.lower()]
+            res = [
+                i
+                for i in file_list_sorted_cache[p][sort_type]
+                if filters[p].lower() in i.lower()
+            ]
         else:
             res = file_list_sorted_cache[p][sort_type]
         if reverse:
             return res[::-1]
         else:
             return res
-    except Exception as e :
+    except Exception as e:
         ls_lock.release()
         print(e)
 
 
 def thumbnails(p, size=0):
-    print(size, "x", size)
+    # print(size, "x", size)
     if size == 0:
         size = config.thumbnail_size
     hash = get_hash(p)
-    if not os.path.exists("cache"):
-        os.mkdir("cache")
-    if os.path.exists(os.path.join("cache", "{}_{}.jpg".format(hash, size))):
+    cache_folder = os.path.expanduser(config.cache_folder)
+    if not os.path.exists(cache_folder):
+        os.makedirs(cache_folder)
+    if os.path.exists(os.path.join(cache_folder, "{}_{}.jpg".format(hash, size))):
         print("Serving", p, "from cache.")
-        return os.path.join("cache", "{}_{}.jpg".format(hash, size))
-    if os.path.exists(os.path.join("cache", "{}_v.jpg".format(hash))):
+        return os.path.join(cache_folder, "{}_{}.jpg".format(hash, size))
+    if os.path.exists(os.path.join(cache_folder, "{}_v.jpg".format(hash))):
         print("Serving", p, "from cache.")
-        return os.path.join("cache", "{}_v.jpg".format(hash))
+        return os.path.join(cache_folder, "{}_v.jpg".format(hash))
     if is_img(p):
         print("Creating thumbnail", p)
         image = Image.open(p)
@@ -194,30 +201,36 @@ def thumbnails(p, size=0):
         scale = max(image.size) / size
         new_size = (int(image.size[0] / scale), int(image.size[1] / scale))
         image.thumbnail(new_size)
-        image.save(os.path.join("cache", "{}_{}.jpg".format(hash, size)))
-        return os.path.join("cache", "{}_{}.jpg".format(hash, size))
+        image.save(os.path.join(cache_folder, "{}_{}.jpg".format(hash, size)))
+        return os.path.join(cache_folder, "{}_{}.jpg".format(hash, size))
     else:
-        img_output_path = os.path.join("cache", "{}_v.jpg".format(hash))
-        cmd = "ffmpeg -i \"{}\" -ss 00:00:05.000 -vframes 1 -vf scale=640:-1 \"{}\"".format(p,img_output_path)
+        img_output_path = os.path.join(cache_folder, "{}_v.jpg".format(hash))
+        cmd = 'ffmpeg -i "{}" -ss 00:00:05.000 -vframes 1 -vf scale=640:-1 "{}"'.format(
+            p, img_output_path
+        )
         print(cmd)
         os.system(cmd)
         if not os.path.exists(img_output_path):
             print("Failed at 5s, now try at 0s.")
-            cmd = "ffmpeg -i \"{}\" -ss 00:00:00.000 -vframes 1 -vf scale=640:-1 \"{}\"".format(p,img_output_path)
+            cmd = 'ffmpeg -i "{}" -ss 00:00:00.000 -vframes 1 -vf scale=640:-1 "{}"'.format(
+                p, img_output_path
+            )
             print(cmd)
             os.system(cmd)
         return img_output_path
 
+
 def delete(path):
-    parent,fn = os.path.split(path)
+    parent, fn = os.path.split(path)
     if not os.path.exists(path):
-        print(path,'do not exists!')
+        print(path, "do not exists!")
         return
-    if not os.path.exists(os.path.join(parent,'.trash')):
-        os.mkdir(os.path.join(parent,'.trash'))
-    print('del',path)
-    shutil.move(path, os.path.join(parent,'.trash',fn) )
+    if not os.path.exists(os.path.join(parent, ".trash")):
+        os.mkdir(os.path.join(parent, ".trash"))
+    print("del", path)
+    shutil.move(path, os.path.join(parent, ".trash", fn))
     if parent in file_list_cache:
         del file_list_cache[parent]
+
 
 load_cache()

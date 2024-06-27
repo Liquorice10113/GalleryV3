@@ -1,0 +1,39 @@
+<html>
+
+<head>
+    <meta name="viewport" content="user-scalable=0">
+    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="/{{base}}/static/marmoset.js"></script>
+    <style>
+        @font-face {
+            font-family: "arial";
+            src: url(/{{base}}/static/arial.ttf) format("truetype");
+        }
+
+        #back_btn_mini {
+            transition: all 0.1s ease-in-out;
+            user-select: none;
+            position: fixed;
+            z-index: 2;
+            height: 2.5rem;
+            width: 4rem;
+            border-radius: 1.25rem;
+            background-color: #00000066;
+            text-align: center;
+            line-height: 2.5rem;
+            font-size: 1.3rem;
+            color: #fff;
+            box-shadow: #00000099 0px 0px 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <a onclick="history.back()" id="back_btn_mini">←</a>
+    <script>
+        marmoset.embed('/{{base}}/file/{{file}}', { width: 800, height: 600, autoStart: true, fullFrame: true, pagePreset: false });
+    </script>
+</body>
+
+</html>

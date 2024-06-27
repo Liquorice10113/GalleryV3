@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="/{{base}}/static/style.css" type="text/css">
     <link rel="manifest" href="/{{base}}/gv3.webmanifest" crossorigin="use-credentials">
     <link rel="icon" type="image/x-icon" href="/{{base}}/static/icon32.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
         @font-face {
             font-family: "arial";
@@ -21,31 +21,45 @@
 
         body {
             background-color: #000;
+            height: 100%;
+            width: 100%;
         }
 
         iframe {
             position: fixed;
-            overflow: hidden;
+            /* top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(90deg); */
             height: 100%;
             width: 100%;
             border: none;
+            transform-origin: center center;
         }
 
-        #fulls {
+        #rotate_btn {
             position: fixed;
-            left: 0;
-            bottom: 4px;
-            line-height: 2.6rem;
+            left: 0.5rem;
+            bottom: 0.5rem;
+        }
+
+        #full_btn {
+            position: fixed;
+            left: 0.5rem;
+            bottom: 0.5rem;
+            line-height: 3rem;
         }
     </style>
 </head>
 
 <body ondragstart="return false;" ondrop="return false;">
     <iframe id="if" src="/{{base}}/tree/"></iframe>
-    <div id="fulls" class="btn">⤢</div>
+    <!-- <div id="ui"> -->
+        <div id="full_btn" class="btn">⤢</div>
+        <div id="rotate_btn"></div>
+    <!-- </div> -->
     <script>
-        var content = document.body;
-        var toggleButton = document.getElementById('fulls');
+        var content = document.documentElement;
+        var toggleButton = document.getElementById('full_btn');
 
         toggleButton.addEventListener('click', function () {
             if (document.fullscreenElement) {
@@ -54,6 +68,16 @@
                 content.requestFullscreen();
             }
         });
+
+        // var iframe = document.getElementById('if');
+        // function setDynamicHeight() {
+        //     iframe.style.height = window.innerWidth+'px';
+        //     iframe.style.width = window.innerHeight+'px';
+        // }
+        // setDynamicHeight();
+        // setTimeout(setDynamicHeight,1000)
+
+        // window.addEventListener('resize', setDynamicHeight);
     </script>
 </body>
 

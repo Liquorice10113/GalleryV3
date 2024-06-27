@@ -1,0 +1,48 @@
+.thumb {
+    aspect-ratio: 0;
+}
+
+.dir_item {
+    /* border-radius: 1rem; */
+    /* background-color: #bbb; */
+}
+
+.dir_item .thumb {
+    aspect-ratio: 0;
+    height: 10rem;
+    object-fit: contain;
+    background-color: #111;
+}
+
+.dir_cnt{
+    margin-left: 1rem;
+}
+
+.file_item {
+    height: auto;
+    margin: 0;
+}
+
+.file_item .thumb {
+    border-radius: 0rem;
+    height: auto;
+}
+
+.file_item .name {
+    display: none;
+}
+
+#ui,
+#back_btn {
+    transition: all 0.2s ease-in-out;
+    opacity: 0.3;
+}
+
+#ui:hover,
+#back_btn:hover {
+    opacity: 0.9;
+}
+
+.grid-container {
+    grid-template-columns: 1fr;
+}

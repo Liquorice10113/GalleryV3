@@ -6,15 +6,35 @@
     {% if not misc['dark'] %}
     <link rel="stylesheet" href="/{{misc['base']}}/static/light.css" type="text/css">
     {% endif %}
+    {% if not misc['img'] %}
+    <style>
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    </style>
+    {% endif %}
     <link rel="icon" type="image/x-icon" href="/{{misc['base']}}/static/icon32.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-<body style="width: 100%;height: 100%;" ondragstart="return false;" ondrop="return false;" ontouchmove="pinch(event)">
+<body style="width: 100%;height: 100%;" ondragstart="return false;" ondrop="return false;">
+    <div id="pop"></div>
+    <script>
+        var pop = document.getElementById("pop");
+        function show_pop(s) {
+            pop.innerText = s;
+            pop.style.display = "block";
+            setTimeout(() => {
+                pop.style.display = "none";
+            }, 2000)
+        }
+    </script>
     {% if misc['img'] %}
     <div id="imgv">
         {% if misc['og'] %}
-        <img id="imgd" src="/{{misc['base']}}/file/{{misc['current']}}" />
+        <img id="imgd" src="/{{misc['base']}}/file/{{misc['current']}}"
+            onerror='this.onerror=null;show_pop("Heif not supported by browser, showing resampled image.");this.src="/{{misc['base']}}/thumb/{{misc['current']}}?size=8000";setTimeout(window_resize, 100);' />
         {% else %}
         <img id="imgd" src="/{{misc['base']}}/thumb/{{misc['current']}}?size=2000" />
         {% endif %}
@@ -25,54 +45,60 @@
             <source src="/{{misc['base']}}/file/{{misc['current']}}">
         </video>
     </div>
+    <script>
+        document.body.style.background = "#000";
+    </script>
     {% endif %}
     <div id="ui_touchable">
-        <div id="s_og" onclick="toggle_scale()"></div>
-        <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn_q"></a>
-        <div id="ui_toggle_btn" onclick="toggle_ui()"></div>
-        <div id="scale_toggle" onclick="toggle_ui()"></div>
-        <div id="refresh" onclick="refresh()"></div>
-        <a id="next" href="/{{misc['base']}}/view/{{misc['next']}}"></a>
-        <a id="prev" href="/{{misc['base']}}/view/{{misc['prev']}}"></a>
+        <div id="scale_toggle" onclick="toggle_scale()"></div>
+        <!-- <a id="back_btn_q" onclick="show_cover();history.back();"></a> -->
+        <a href="/{{misc['base']}}/tree/{{misc['parent']}}#i{{misc['n']}}" id="back_btn_q" onclick="show_cover()"></a>
+        <div id="ui_toggle_bottom" onclick="toggle_ui()"></div>
+        <div id="ui_toggle" onclick="toggle_ui()"></div>
+        <div id="refresh" onclick="refresh()" style="display: none;"></div>
+        <a id="next" onclick="next()"></a>
+        <a id="prev" onclick="prev()"></a>
     </div>
     <div id="ui">
         <div id="tree">
-            <div style="width: auto;max-width: 100%;"  class="tree_item">{{misc['name']}}</div>
+            <!-- <a onclick="show_cover();history.back();" id="back_btn_mini" class="tree_item btn_blur">←</a> -->
+            <a href="/{{misc['base']}}/tree/{{misc['parent']}}#i{{misc['n']}}" onclick="show_cover()" id="back_btn_mini" class="tree_item btn_blur">←</a>
+            <div style="width: auto;max-width: 100%;" class="tree_item btn_blur">{{misc['name']}}</div>
         </div>
-        <a href="/{{misc['base']}}/tree/{{misc['parent']}}" id="back_btn" style="background-image: url(/{{misc['base']}}/static/back.png);" onclick="show_cover()"></a>
-        <a href="/{{misc['base']}}/tree/{{misc['parent']}}" onclick="show_cover()" id="back_btn_mini">←</a>
+        <a href="/{{misc['base']}}/tree/{{misc['parent']}}#i{{misc['n']}}" id="back_btn" class="btn_blur" onclick="show_cover()">←</a>
+        <!-- <a id="back_btn" class="btn_blur" onclick="show_cover();history.back();">←</a> -->
         {% if not misc['img'] %}
         <div id="video-controls">
-            <button type="button" id="play-pause">| |</button>
-            <input type="range" id="seek-bar" step="0.25" value="0" onkeydown="event.preventDefault()">
-            <div id="ctime">0:00/0:00</div>
+            <div type="button" id="play-pause" class="btn_blur">| |</div>
+            <input type="range" id="seek-bar" step="0.25" value="0" onkeydown="event.preventDefault()" class="btn_blur">
+            <div id="ctime" class="btn_blur">0:00/0:00</div>
         </div>
         {% else %}
-        <div id="zoom_in" onclick="zoom(0.5,0.5,1.1)">+</div>
-        <div id="zoom_out" onclick="zoom(0.5,0.5,0.9)">-</div>
+        <div id="zoom_in" class="btn_blur" onclick="zoom(0.5,0.5,1.1)">+</div>
+        <div id="zoom_out" class="btn_blur" onclick="zoom(0.5,0.5,0.9)">-</div>
         {% endif %}
         <div id="bottom_deco" onclick="toggle_ui()"></div>
-        <div id="buttons">
+        <div id="buttons" class="btn_blur">
             <div class="btn" onclick="toggle_dark()">☀</div>
             {% if misc['img'] %}
-            <div class="btn" onclick="toggle_resample()">{% if misc['og'] %} OG {% else %} 2000 {% endif %}</div>
+            <div class="btn" onclick="toggle_resample()">{% if misc['og'] %} OG {% else %} LOW {% endif %}</div>
             {% endif %}
-            <div class="btn" onclick="document.getElementById('del_confirm').style.display = 'block'"><svg
-                    xmlns="http://www.w3.org/2000/svg" style="margin-top:1rem;" width="1rem" height="1rem"
+            <div class="btn" onclick="document.getElementById('del_confirm').style.display = 'block'">
+                <svg xmlns="http://www.w3.org/2000/svg" style="padding-top:0.95rem;" width="1rem" height="1rem"
                     viewBox="0 0 24 24">
-                    
-                    <path {% if misc['dark'] %}fill="#fff"{% else %}fill="#000"{% endif %}
+
+                    <path {% if misc['dark'] %}fill="#fff" {% else %}fill="#000" {% endif %}
                         d="M3 6v18h18v-18h-18zm5 14c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm5 0c0 .552-.448 1-1 1s-1-.448-1-1v-10c0-.552.448-1 1-1s1 .448 1 1v10zm4-18v2h-20v-2h5.711c.9 0 1.631-1.099 1.631-2h5.315c0 .901.73 2 1.631 2h5.712z" />
-                </svg></div>
+                </svg>
+            </div>
             <div class="btn" id="star_btn" onclick="toggle_star()">?</div>
         </div>
         <div class="hint" id="h_l">⟨</div>
-        {% if misc['img'] %}
         <div class="hint" id="h_m">「 」</div>
-        {% endif %}
         <div class="hint" id="h_r">⟩</div>
+        <div class="hint" id="h_bck">←</div>
     </div>
-    <!-- <div class="hint" id="h_b" onclick="toggle_ui()"></div> -->
+    <div id="ctime_big" onclick="preventDefault()">0:00/0:00</div>
     <div id="del_confirm">
         <div onclick="delete_f()" style="color: #992222;">✓</div>
         <div onclick="document.getElementById('del_confirm').style.display = 'none'" style="color: #eee;">☓</div>
@@ -80,7 +106,7 @@
     <div id="cover">
         <div class="loader"></div>
     </div>
-    <div id="vol_disp">
+    <div id="vol_disp" class="btn_blur">
         100
     </div>
     <script>
@@ -97,47 +123,46 @@
         {% else %}
         var dark = 0;
         {% endif %}
-        {% if misc['img'] %}
-        var scale_type=1;
+
+        var scale_type = 1;
         {% if "scale_type_overwrite" in misc %}
         var scale_type_overwrite = {{ misc['scale_type_overwrite']}};
         {% else %}
         var scale_type_overwrite = -1;
         {% endif %}
-        
+        if (scale_type_overwrite >= 0) {
+            scale_type = scale_type_overwrite;
+        }
+
+        {% if misc['img'] %}
+        var video = null;
 
         var pinch_dist = 0;
         var img = document.getElementById("imgd");
 
-        if (scale_type_overwrite >= 0) {
-            scale_type = scale_type_overwrite;
-        }
         var imgv = document.getElementById("imgv");
         function to_center() {
-            if (!img.complete) {
-                return
-            }
+            // if (!img.complete) {
+            //     return
+            // }
             imgv.scrollTo({
                 top: imgv.scrollHeight / 2 - window.innerHeight / 2,
                 left: imgv.scrollWidth / 2 - window.innerWidth / 2,
                 behavior: "instant"
             })
         }
-        
-        function fill_border()
-        {
-            if(imgd.height<window.innerHeight)
-            {
-                imgd.style.marginTop = (window.innerHeight-imgd.height)/2 + "px";
+
+        function fill_border() {
+            if (imgd.height < window.innerHeight) {
+                imgd.style.marginTop = (window.innerHeight - imgd.height) / 2 + "px";
             }
-            else{
+            else {
                 imgd.style.marginTop = 0;
             }
-            if(imgd.width<window.innerWidth)
-            {
-                imgd.style.marginLeft = (window.innerWidth-imgd.width)/2 + "px";
+            if (imgd.width < window.innerWidth) {
+                imgd.style.marginLeft = (window.innerWidth - imgd.width) / 2 + "px";
             }
-            else{
+            else {
                 imgd.style.marginLeft = 0;
             }
         }
@@ -155,8 +180,7 @@
                     img.style.height = "auto";
                 }
             }
-            else
-            {
+            else {
                 if (ori) {
                     img.style.width = "100%";
                     img.style.height = "auto";
@@ -168,16 +192,6 @@
             }
             fill_border();
 
-        }
-        if (img.complete) {
-            init_scale()
-            to_center()
-        }
-        else {
-            img.addEventListener('load', () => {
-                init_scale()
-                to_center()
-            })
         }
 
         function toggle_scale() {
@@ -194,14 +208,14 @@
             to_center()
         }
 
-        var div1 = document.getElementById("scale_toggle")
+        var div1 = document.getElementById("ui_toggle")
         var div2 = document.getElementById("next")
         var div3 = document.getElementById("prev")
-        var div4 = document.getElementById("ui_toggle_btn")
-        // var div5 = document.getElementById("s_og")
+        var div4 = document.getElementById("ui_toggle_bottom")
+        var div5 = document.getElementById("scale_toggle")
         var div6 = document.getElementById("back_btn_q")
         var div7 = document.getElementById("refresh")
-        const array = [div1, div2, div3, div4, div6, div7]
+        const array = [div1, div2, div3, div4, div5, div6, div7]
         array.forEach((div) => {
             div.addEventListener('touchstart', (event) => {
                 pinch_dist = 0;
@@ -227,22 +241,21 @@
             // e = e || window.event;
             // use e.keyCode
             key = e.key;
-
-            if(key=="PageUp")
-            {
-                window.location.href = "/{{misc['base']}}/view/{{misc['prev']}}";
+            console.log(key)
+            if (key == "PageUp") {
+                prev()
             }
-            if(key=="PageDown")
-            {
-                window.location.href = "/{{misc['base']}}/view/{{misc['next']}}";
+            if (key == "PageDown") {
+                next()
             }
+            if (key == "+" || key == "=") { zoom(0.5, 0.5, 1.1) }
+            if (key == "-" || key == "_") { zoom(0.5, 0.5, 0.9) }
         };
         document.onkeydown = function (e) {
             // e = e || window.event;
             // use e.keyCode
             key = e.key;
-            if(key=="Backspace")
-            {
+            if (key == "Backspace") {
                 window.location.href = "/{{misc['base']}}/tree/{{misc['parent']}}";
             }
         };
@@ -256,52 +269,55 @@
 
 
 
-        function zoom(x,y,fac)
-        {
-            if(img.style.height == "auto")
-            {  
-                if(parseInt(img.style.width)*fac<20) return;   
-                if(parseInt(img.style.width)*fac>500) return;
-                img.style.width = parseInt(img.style.width)*fac +"%";
-    
-            }
-            else{
-                
-                if(parseInt(img.style.height)*fac<20) return;  
-                if(parseInt(img.style.height)*fac>500) return; 
-                img.style.height = parseInt(img.style.height)*fac +"%";
-    
-            }
+        function zoom(x, y, fac) {
 
-            imgv.scrollLeft = imgv.scrollLeft*fac + (fac-1-0.01676)*window.innerWidth*x;
-            imgv.scrollTop = imgv.scrollTop*fac + (fac-1-0.002)*window.innerHeight*y;
+            if (img.style.height == "auto") {
+                if (parseInt(img.style.width) * fac < 20) return;
+                if (parseInt(img.style.width) * fac > 500) return;
+                img.style.width = parseInt(img.style.width) * fac + "%";
+
+            }
+            else {
+
+                if (parseInt(img.style.height) * fac < 20) return;
+                if (parseInt(img.style.height) * fac > 500) return;
+                img.style.height = parseInt(img.style.height) * fac + "%";
+
+            }
 
             fill_border();
+            imgv.scrollLeft = imgv.scrollLeft * fac + (fac - 1 - 0.0045) * window.innerWidth * x;
+            imgv.scrollTop = imgv.scrollTop * fac + (fac - 1 - 0.002) * window.innerHeight * y;
         }
 
         var centerx = 0.5;
         var centery = 0.5;
 
-        function pinch(event){
-            console.log("mov");
+        var pinching = new Date().getTime();
+        function pinch(event) {
+            now = new Date().getTime();
+            if(now-pinching<1000/60) return;
+            // console.log("mov");
             if (event.touches.length === 2) {
                 t1x = event.touches[0].clientX
-                t1y = event.touches[0].clientY 
+                t1y = event.touches[0].clientY
                 t2x = event.touches[1].clientX
                 t2y = event.touches[1].clientY
-                centerx = (t1x+t2x)/2/window.innerWidth
-                centery = (t1y+t2y)/2/window.innerHeight
-                dist = Math.sqrt((t2x-t1x)**2 + (t2y-t1y)**2)
-                if(pinch_dist!=0)
-                {
-                    dist_alpha = dist/pinch_dist
-                    if(Math.abs(dist_alpha-1)>0.005)
-                        zoom(centerx,centery,dist_alpha);
+                centerx = (t1x + t2x) / 2 / window.innerWidth
+                centery = (t1y + t2y) / 2 / window.innerHeight
+                dist = Math.sqrt((t2x - t1x) ** 2 + (t2y - t1y) ** 2)
+                if (pinch_dist != 0) {
+                    dist_alpha = dist / pinch_dist
+                    if (Math.abs(dist_alpha - 1) > 0.005)
+                        zoom(centerx, centery, dist_alpha);
+                        // zoom(0.5, 0.5, dist_alpha);
                 }
                 pinch_dist = dist;
                 event.preventDefault();
             }
+            pinching = now;
         }
+        document.body.ontouchmove = pinch
 
         {% else %}
         // Video
@@ -313,8 +329,11 @@
         // Sliders
         var seekBar = document.getElementById("seek-bar");
         var ctime = document.getElementById("ctime");
+        var ctime_big = document.getElementById("ctime_big");
+        var ctime_big_timeout = null;
 
         var seek_bar_hold = false;
+
 
         playButton.addEventListener("click", function () {
             if (video.paused == true) {
@@ -328,7 +347,7 @@
                 video.pause();
 
                 // Update the button text to 'Play'
-                playButton.innerHTML = '<span style="font-size: 2rem;">▸</span>';
+                playButton.innerHTML = '<span style="font-size: 3.2rem; line-height: 5rem; padding-left:0.3rem;">▸</span>';
             }
         });
         // Event listener for the seek bar
@@ -340,24 +359,30 @@
             // Update the video time
             video.currentTime = time;
         });
+
+        seekBar.addEventListener("input", (event) => {
+            currentTime = video.duration * event.target.value / 100;
+
+            c_minutes = Math.floor(currentTime / 60);
+            c_seconds = Math.floor(currentTime % 60);
+            t_minutes = Math.floor(video.duration / 60);
+            t_seconds = Math.floor(video.duration % 60);
+
+            formattedTime = `${c_minutes.toString()}:${c_seconds.toString().padStart(2, '0')}/${t_minutes.toString()}:${t_seconds.toString().padStart(2, '0')}`;
+            ctime_big.style.display = "block";
+            ctime_big.style.left = "calc( " + event.target.value / 100 + " * calc( 100% - 15rem ) + 0.5rem  )";
+            ctime_big.innerText = formattedTime;
+        });
         // Update the seek bar as the video plays
         video.addEventListener("timeupdate", function () {
             // Calculate the slider value
             // if (video.paused) return;
-            if (seek_bar_hold) return;
             var value = (100 / video.duration) * video.currentTime;
+            if (!seek_bar_hold) {
+                seekBar.value = value;
+            }
 
-            // Update the slider value
-            seekBar.value = value;
-            currentTime = video.duration - video.currentTime;
-            // hours = Math.floor(currentTime / 3600);
-            c_minutes = Math.floor(video.currentTime / 60);
-            c_seconds = Math.floor(video.currentTime % 60);
-            t_minutes = Math.floor(video.duration / 60);
-            t_seconds = Math.floor(video.duration % 60);
-
-
-            formattedTime = `${c_minutes.toString()}:${c_seconds.toString().padStart(2, '0')}/${t_minutes.toString()}:${t_seconds.toString().padStart(2, '0')}`;
+            formattedTime = getFormatedTime()
             ctime.innerText = formattedTime;
         });
         // Pause the video when the slider handle is being dragged
@@ -372,27 +397,49 @@
             seek_bar_hold = true;
         });
 
-        // Play the video when the slider handle is dropped
         seekBar.addEventListener("mouseup", function () {
             var time = video.duration * (seekBar.value / 100);
             video.currentTime = time;
             seek_bar_hold = false;
+            ctime_big.style.display = "none";
         });
 
         seekBar.addEventListener("touchend", function () {
             var time = video.duration * (seekBar.value / 100);
             video.currentTime = time;
             seek_bar_hold = false;
+            ctime_big.style.display = "none";
             // console.log("touch end")
         });
+
+        function toggle_scale() {
+            scale_type = 1 - scale_type;
+            if(scale_type==1)
+            {
+                video.style.objectFit = "contain";
+                // video.style.height = "100%"
+            }
+            else{
+                video.style.objectFit = "cover";
+                // video.style.height = "auto"
+            }
+            fetch("/{{misc['base']}}/set_param/{{misc['parent']}}&fit=" + scale_type, { method: 'GET' });
+        }
+
+        if(scale_type==1)
+        {
+            video.style.objectFit = "contain";
+        }
+        else{
+            video.style.objectFit = "cover";
+        }
 
         document.onkeyup = function (e) {
             // e = e || window.event;
             // use e.keyCode
             key = e.key;
             // console.log(key);
-            if(key==" ")
-            {
+            if (key == " ") {
                 if (video.paused == true) {
                     video.play();
                     playButton.innerHTML = "| |";
@@ -401,13 +448,11 @@
                     playButton.innerHTML = '<span style="font-size: 2rem;">▸</span>';
                 }
             }
-            if(key=="PageUp")
-            {
-                window.location.href = "/{{misc['base']}}/view/{{misc['prev']}}";
+            if (key == "PageUp") {
+                window.location.replace("/{{misc['base']}}/view/{{misc['prev']}}");
             }
-            if(key=="PageDown")
-            {
-                window.location.href = "/{{misc['base']}}/view/{{misc['next']}}";
+            if (key == "PageDown") {
+                window.location.replace("/{{misc['base']}}/view/{{misc['next']}}");
             }
         }
         document.onkeydown = function (e) {
@@ -415,72 +460,95 @@
             // use e.keyCode
             key = e.key;
 
-            if(key=="ArrowRight")
-            {
+            if (key == "ArrowRight") {
                 video.currentTime += 1;
+                showTimeBig();
             }
-            if(key=="ArrowLeft")
-            {
+            if (key == "ArrowLeft") {
                 video.currentTime -= 1;
+                showTimeBig();
             }
-            if(key=="ArrowUp")
-            {
-                if(video.volume<=0.9)
-                {
+            if (key == "ArrowUp") {
+                if (video.volume <= 0.9) {
                     video.volume += 0.1;
-                    fetch("/{{misc['base']}}/set_param/?vol=" + video.volume, { method: 'GET' });
+                    // fetch("/{{misc['base']}}/set_param/?vol=" + video.volume, { method: 'GET' });
                 }
-                if(video.volume>0.99)
-                {
+                if (video.volume > 0.99) {
                     video.volume = 1
                 }
                 show_vol();
             }
-            if(key=="ArrowDown")
-            {
-                if(video.volume>=0.1)
-                {
+            if (key == "ArrowDown") {
+                if (video.volume >= 0.1) {
                     video.volume -= 0.1;
-                    fetch("/{{misc['base']}}/set_param/?vol=" + video.volume, { method: 'GET' });                    
+                    // fetch("/{{misc['base']}}/set_param/?vol=" + video.volume, { method: 'GET' });
                 }
-                if(video.volume<0.01)
-                {
+                if (video.volume < 0.01) {
                     video.volume = 0;
                 }
                 show_vol();
             }
-            if(key=="Backspace")
-            {
+            if (key == "Backspace") {
                 window.location.href = "/{{misc['base']}}/tree/{{misc['parent']}}";
+            }
+            if (key == "s") {
+                video.currentTime -= 1 / 30;
+                // video.pause();
+                // playButton.innerHTML = '<span style="font-size: 2rem;">▸</span>';
+                showTimeBig();
+
+            }
+            if (key == "d") {
+                video.currentTime += 1 / 30;
+                // video.pause();
+                // playButton.innerHTML = '<span style="font-size: 2rem;">▸</span>';
+                showTimeBig();
             }
         };
 
         document.onwheel = function (e) {
-            if(e.deltaY<0)
-            {
+            if (e.deltaY < 0) {
                 video.currentTime -= 1;
             }
-            else
-            {
+            else {
                 video.currentTime += 1;
             }
-        
+            showTimeBig();
         }
-
 
         function to_center() { };
         function refresh() { };
-        function pinch(event) { }
+
+        var pinching = new Date().getTime();
+        var ox=0;
+        function pinch(event) {
+            now = new Date().getTime();
+            if(now-pinching<100) return;
+            if (event.touches.length === 1) {
+                tx = event.touches[0].clientX
+                if(ox!=0&&Math.abs(tx-ox)>5){
+                    showTimeBig();
+                    video.currentTime += (tx-ox)/10
+                }
+                ox = tx
+                event.preventDefault();
+            }
+            pinching = now;
+        }
+        document.body.ontouchmove = pinch
+        document.body.ontouchend = ()=>{
+            ox = 0;
+        }
+
         var show_vol_timeout = null;
-        function show_vol()
-        {
+        function show_vol() {
             clearTimeout(show_vol_timeout);
             vol_disp = document.getElementById("vol_disp")
-            vol_disp.innerText = "🔈" + Math.round(video.volume*100);
+            vol_disp.innerText = "🔈" + Math.round(video.volume * 100);
             vol_disp.style.display = "block";
-            show_vol_timeout = setTimeout(function(){
+            show_vol_timeout = setTimeout(function () {
                 document.getElementById("vol_disp").style.display = "none";
-            } ,1000)
+            }, 1000)
         }
 
         {% endif %}
@@ -489,8 +557,11 @@
             dark = 1 - dark;
             fetch("/{{misc['base']}}/set_param/{{misc['current']}}?dark=" + dark, { method: 'GET' }).then(
                 () => {
-                    if(dark) full_btn.style.color = "#fff";
-                    else full_btn.style.color = "#000";
+                    if(full_btn)
+                    {
+                        if (dark) full_btn.style.color = "#fff";
+                        else full_btn.style.color = "#000";
+                    }
                     location.reload()
                 }
             )
@@ -505,26 +576,52 @@
             )
         }
         const ui = document.getElementById("ui")
+
+        function extend_ui_timeout() {
+            // console.log("extend_ui_timeout()")
+            clearTimeout(ui_timeout);
+            ui_timeout = setTimeout(hide_ui,10000)
+        }
+        ui.ontouchmove = extend_ui_timeout;
+        ui.ontouchstart = extend_ui_timeout;
+        ui.ontouchend = extend_ui_timeout;
+        ui.onmousedown = extend_ui_timeout;
+        ui.onmouseenter = extend_ui_timeout;
+        // ui.onmousemove = extend_ui_timeout;
+        ui.onmouseup = extend_ui_timeout;
+
         const ui_touchable = document.getElementById("ui_touchable")
         var ui_on = false;
 
-        var timeout;
-        var full_btn = window.parent.document.getElementById('fulls');
-        full_btn.style.display = "none";
+        var ui_timeout;
+        var full_btn = window.parent.document.getElementById('full_btn');
+        if(full_btn)
+        {
+            full_btn.style.display = "none";
+        }
+        else{
+            console.warn("GV3 should not be running on a standalone tab.")
+        }
         function hide_ui() {
-            clearTimeout(timeout)
-            ui_on = false
-            ui.style.display = "none"
-            full_btn.style.display = "none"
-            ui_touchable.style.opacity = 0
+            clearTimeout(ui_timeout);
+            ui_on = false;
+            ui.style.display = "none";
+            if(full_btn)
+            {
+                full_btn.style.display = "none";
+            }
+            ui_touchable.style.opacity = 0;
         }
         function show_ui() {
-            clearTimeout(timeout)
-            ui_on = true
-            ui.style.display = "block"
-            full_btn.style.display = "block"
-            ui_touchable.style.opacity = 1
-            // timeout = setTimeout(hide_ui,5000)
+            clearTimeout(ui_timeout);
+            ui_on = true;
+            ui.style.display = "block";
+            if(full_btn)
+            {
+                full_btn.style.display = "block";
+            }
+            ui_touchable.style.opacity = 1;
+            ui_timeout = setTimeout(hide_ui,10000)
         }
         function toggle_ui() {
             if (ui_on) {
@@ -536,7 +633,7 @@
         }
         {% if not misc['img'] %}
         show_ui()
-        timeout = setTimeout(hide_ui,6000);
+        timeout = setTimeout(hide_ui, 6000);
         document.body.addEventListener("mousedown", function () {
             clearTimeout(timeout);
         });
@@ -544,8 +641,10 @@
             clearTimeout(timeout);
         });
         {% else %}
-        window.onresize = function(){ setTimeout(window_resize,100) };
+        window.onresize = function () { setTimeout(window_resize, 100) };
         {% endif %}
+
+        //Functions
         function delete_f() {
             show_cover()
             fetch("/{{misc['base']}}/delete/{{misc['current']}}", { method: 'GET' }).then(
@@ -554,35 +653,117 @@
                 }
             )
         }
-        function show_cover()
-        {
+        function show_cover() {
             setTimeout(
-                function(){document.getElementById('cover').style.display = "block"},
-                500
+                function () { document.getElementById('cover').style.display = "block" },
+                3000
             )
-            
+            if(video)
+            {
+                video.pause();
+            }
         }
 
-        function window_resize()
-        {
+        function window_resize() {
             init_scale();
             to_center();
         }
 
-        function toggle_star()
-        {
-            star = 1- star;
+        function toggle_star() {
+            star = 1 - star;
             fetch("/{{misc['base']}}/set_param/{{misc['current']}}?star=" + star, { method: 'GET' }).then(
                 () => {
-                    if(star){
+                    if (star) {
                         document.getElementById("star_btn").innerText = "★";
                     }
-                    else{
+                    else {
                         document.getElementById("star_btn").innerText = "☆";
                     }
                 }
             )
         }
+
+        function getFormatedTime() {
+            c_minutes = Math.floor(video.currentTime / 60);
+            c_seconds = Math.floor(video.currentTime % 60);
+            t_minutes = Math.floor(video.duration / 60);
+            t_seconds = Math.floor(video.duration % 60);
+
+            formattedTime = `${c_minutes.toString()}:${c_seconds.toString().padStart(2, '0')}/${t_minutes.toString()}:${t_seconds.toString().padStart(2, '0')}`;
+            return formattedTime;
+        }
+
+        function showTimeBig() {
+            formattedTime = getFormatedTime();
+            ctime_big.innerText = formattedTime;
+            ctime_big.style.left = "calc( 50% - 4rem )";
+            ctime_big.style.display = "block";
+            clearTimeout(ctime_big_timeout);
+            ctime_big_timeout = setTimeout(function () {
+                ctime_big.style.display = "none";
+            }, 800)
+        }
+
+        function next() {
+            if ({{misc['index'][0]}} < {{misc['index'][1]}}-1)
+            {
+                show_cover();
+                window.location.replace("/{{misc['base']}}/view/{{misc['next']}}");
+            }
+            else {
+                show_pop("Last Page");
+            }
+        }
+        function prev() {
+            if ({{ misc['index'][0]}} > 0)
+            {
+                show_cover();
+                window.location.replace("/{{misc['base']}}/view/{{misc['prev']}}");
+            }
+            else {
+                show_pop("First Page");
+            }
+        }
+
+        {% if misc['img'] %}
+
+        //Wait for loading
+        var check_img_loading = null;
+        function check_img_loading() {
+            window_resize();
+            if (img.complete) {
+                window_resize();
+                imgd.style.opacity = 1;
+                clearInterval(check_img_loading);
+            }
+        }
+        check_img_loading = setInterval(check_img_loading, 100);
+
+        if (img.complete) {
+            window_resize();
+            imgd.style.opacity = 1;
+            clearInterval(check_img_loading);
+        }
+        else {
+            img.addEventListener('load', () => {
+                window_resize();
+                imgd.style.opacity = 1;
+                clearInterval(check_img_loading);
+            })
+        }
+        window_resize();
+        //Show image anyway if not loaded in 4sec
+        setTimeout(()=>{
+            if (!img.complete)
+            {
+                window_resize();
+                imgd.style.opacity = 1;
+                clearInterval(check_img_loading);
+            }
+        },3000)
+
+        {% endif %}
+
     </script>
 </body>
 
